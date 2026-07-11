@@ -34,7 +34,7 @@ Live `GetValuation` over gRPC (port 50061) against the freshly-built curve, prin
 | **ZERO** | `2021-08-13 → 2021-08-13` (start == as-of) | 10 000 | 0 | 0 | 10 000 | No movement → nothing in, nothing out; no phantom carry. |
 | **BELOW** | drawdown `2024-03-16 → 2024-05-03` | 7 530 | −2 470 | 0 | **10 000** | A real −24.7% loss, but take-home is **floored at principal** — "lock your floor, gamble your gains," and no carry on a loss. |
 
-*(Reproduce: `cd services/brain && PYTHONPATH="$PWD:$PWD/gen" uv run python <cross-exam client>` — see §7.)*
+*(Reproduce: call `GetValuation` on `127.0.0.1:50061` with principal 10 000 and each window above; assert `principal+gain==nav` and `take_home>=principal`. Sketch in §7.)*
 
 ## 5. Determinism (the "reset between demo takes" guarantee)
 
@@ -75,7 +75,20 @@ print(r.bets_placed, r.bets_won, r.final_pool_cents)"     # 850 347 147747
 ./scripts/build_nav_curve.sh                          # +47.7%, 360 points
 
 # 4. live money-math cross-exam over gRPC (container must be up)
-PYTHONPATH="$PWD:$PWD/gen" uv run python scratchpad/xexam.py   # ALL CROSS-EXAM CHECKS PASS
+PYTHONPATH="$PWD:$PWD/gen" uv run python - <<'PY'
+import grpc
+from boys.brain.v1 import quant_pb2, quant_pb2_grpc
+stub = quant_pb2_grpc.QuantServiceStub(grpc.insecure_channel("127.0.0.1:50061"))
+for label, start, asof in [("GAIN","2021-08-13","2024-05-19"),
+                           ("ZERO","2021-08-13","2021-08-13"),
+                           ("BELOW","2024-03-16","2024-05-03")]:
+    v = stub.GetValuation(quant_pb2.GetValuationRequest(
+        commitment_id="x", principal_cents=10_000, start_date=start, as_of=asof))
+    assert v.principal.cents + v.gain.cents == v.nav.cents      # conservation
+    assert v.user_take_home.cents >= v.principal.cents          # floor
+    print(label, "nav", v.nav.cents, "carry", v.carry_preview.cents, "take", v.user_take_home.cents)
+print("ALL CROSS-EXAM CHECKS PASS")
+PY
 ```
 
 ## 8. Coverage added this review
