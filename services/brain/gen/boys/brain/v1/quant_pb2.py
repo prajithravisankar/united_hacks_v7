@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from boys.common.v1 import money_pb2 as boys_dot_common_dot_v1_dot_money__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19\x62oys/brain/v1/quant.proto\x12\rboys.brain.v1\x1a\x1a\x62oys/common/v1/money.proto\"L\n\x08NavPoint\x12\x0c\n\x04\x64\x61te\x18\x01 \x01(\t\x12\"\n\x03nav\x18\x02 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\x0e\n\x06\x65vents\x18\x03 \x03(\t\"Q\n\x12GetNavCurveRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\x12\n\nstart_date\x18\x02 \x01(\t\x12\x10\n\x08\x65nd_date\x18\x03 \x01(\t\"J\n\x08NavCurve\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\'\n\x06points\x18\x02 \x03(\x0b\x32\x17.boys.brain.v1.NavPoint\";\n\x13GetValuationRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\r\n\x05\x61s_of\x18\x02 \x01(\t\"\xdb\x01\n\tValuation\x12\"\n\x03nav\x18\x01 \x01(\x0b\x32\x15.boys.common.v1.Money\x12(\n\tprincipal\x18\x02 \x01(\x0b\x32\x15.boys.common.v1.Money\x12#\n\x04gain\x18\x03 \x01(\x0b\x32\x15.boys.common.v1.Money\x12,\n\rcarry_preview\x18\x04 \x01(\x0b\x32\x15.boys.common.v1.Money\x12-\n\x0euser_take_home\x18\x05 \x01(\x0b\x32\x15.boys.common.v1.Money\"/\n\x16ProjectOutcomesRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\"\xb0\x01\n\nProjection\x12\'\n\x08\x63\x61sh_now\x18\x01 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\'\n\x08ride_p10\x18\x02 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\'\n\x08ride_p50\x18\x03 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\'\n\x08ride_p90\x18\x04 \x01(\x0b\x32\x15.boys.common.v1.Money\"\'\n\x16ListOpenMarketsRequest\x12\r\n\x05\x61s_of\x18\x01 \x01(\t\"Z\n\x06Market\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x14\n\x0cimplied_prob\x18\x03 \x01(\x01\x12\x12\n\nmodel_prob\x18\x04 \x01(\x01\"5\n\x0bOpenMarkets\x12&\n\x07markets\x18\x01 \x03(\x0b\x32\x15.boys.brain.v1.Market\"s\n\x13PlaceUserBetRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\x11\n\tmarket_id\x18\x02 \x01(\t\x12\x0c\n\x04side\x18\x03 \x01(\t\x12$\n\x05stake\x18\x04 \x01(\x0b\x32\x15.boys.common.v1.Money\"*\n\x06\x42\x65tAck\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t2\x9d\x03\n\x0cQuantService\x12I\n\x0bGetNavCurve\x12!.boys.brain.v1.GetNavCurveRequest\x1a\x17.boys.brain.v1.NavCurve\x12L\n\x0cGetValuation\x12\".boys.brain.v1.GetValuationRequest\x1a\x18.boys.brain.v1.Valuation\x12S\n\x0fProjectOutcomes\x12%.boys.brain.v1.ProjectOutcomesRequest\x1a\x19.boys.brain.v1.Projection\x12T\n\x0fListOpenMarkets\x12%.boys.brain.v1.ListOpenMarketsRequest\x1a\x1a.boys.brain.v1.OpenMarkets\x12I\n\x0cPlaceUserBet\x12\".boys.brain.v1.PlaceUserBetRequest\x1a\x15.boys.brain.v1.BetAckBAZ%boys/engine/gen/boys/brain/v1;brainv1\xaa\x02\x17\x42oys.Contracts.Brain.V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19\x62oys/brain/v1/quant.proto\x12\rboys.brain.v1\x1a\x1a\x62oys/common/v1/money.proto\"L\n\x08NavPoint\x12\x0c\n\x04\x64\x61te\x18\x01 \x01(\t\x12\"\n\x03nav\x18\x02 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\x0e\n\x06\x65vents\x18\x03 \x03(\t\"\x7f\n\x12GetNavCurveRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\x12\n\nstart_date\x18\x02 \x01(\t\x12\x10\n\x08\x65nd_date\x18\x03 \x01(\t\x12,\n\ndrive_mode\x18\x04 \x01(\x0e\x32\x18.boys.brain.v1.DriveMode\"J\n\x08NavCurve\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\'\n\x06points\x18\x02 \x03(\x0b\x32\x17.boys.brain.v1.NavPoint\"i\n\x13GetValuationRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\r\n\x05\x61s_of\x18\x02 \x01(\t\x12,\n\ndrive_mode\x18\x03 \x01(\x0e\x32\x18.boys.brain.v1.DriveMode\"\xdb\x01\n\tValuation\x12\"\n\x03nav\x18\x01 \x01(\x0b\x32\x15.boys.common.v1.Money\x12(\n\tprincipal\x18\x02 \x01(\x0b\x32\x15.boys.common.v1.Money\x12#\n\x04gain\x18\x03 \x01(\x0b\x32\x15.boys.common.v1.Money\x12,\n\rcarry_preview\x18\x04 \x01(\x0b\x32\x15.boys.common.v1.Money\x12-\n\x0euser_take_home\x18\x05 \x01(\x0b\x32\x15.boys.common.v1.Money\"]\n\x16ProjectOutcomesRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12,\n\ndrive_mode\x18\x02 \x01(\x0e\x32\x18.boys.brain.v1.DriveMode\"\xb0\x01\n\nProjection\x12\'\n\x08\x63\x61sh_now\x18\x01 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\'\n\x08ride_p10\x18\x02 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\'\n\x08ride_p50\x18\x03 \x01(\x0b\x32\x15.boys.common.v1.Money\x12\'\n\x08ride_p90\x18\x04 \x01(\x0b\x32\x15.boys.common.v1.Money\"\'\n\x16ListOpenMarketsRequest\x12\r\n\x05\x61s_of\x18\x01 \x01(\t\"Z\n\x06Market\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x14\n\x0cimplied_prob\x18\x03 \x01(\x01\x12\x12\n\nmodel_prob\x18\x04 \x01(\x01\"5\n\x0bOpenMarkets\x12&\n\x07markets\x18\x01 \x03(\x0b\x32\x15.boys.brain.v1.Market\"s\n\x13PlaceUserBetRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\x11\n\tmarket_id\x18\x02 \x01(\t\x12\x0c\n\x04side\x18\x03 \x01(\t\x12$\n\x05stake\x18\x04 \x01(\x0b\x32\x15.boys.common.v1.Money\"*\n\x06\x42\x65tAck\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x01 \x01(\x08\x12\x0e\n\x06reason\x18\x02 \x01(\t*Q\n\tDriveMode\x12\x1a\n\x16\x44RIVE_MODE_UNSPECIFIED\x10\x00\x12\x13\n\x0f\x44RIVE_MODE_AUTO\x10\x01\x12\x13\n\x0f\x44RIVE_MODE_USER\x10\x02\x32\x9d\x03\n\x0cQuantService\x12I\n\x0bGetNavCurve\x12!.boys.brain.v1.GetNavCurveRequest\x1a\x17.boys.brain.v1.NavCurve\x12L\n\x0cGetValuation\x12\".boys.brain.v1.GetValuationRequest\x1a\x18.boys.brain.v1.Valuation\x12S\n\x0fProjectOutcomes\x12%.boys.brain.v1.ProjectOutcomesRequest\x1a\x19.boys.brain.v1.Projection\x12T\n\x0fListOpenMarkets\x12%.boys.brain.v1.ListOpenMarketsRequest\x1a\x1a.boys.brain.v1.OpenMarkets\x12I\n\x0cPlaceUserBet\x12\".boys.brain.v1.PlaceUserBetRequest\x1a\x15.boys.brain.v1.BetAckBAZ%boys/engine/gen/boys/brain/v1;brainv1\xaa\x02\x17\x42oys.Contracts.Brain.V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,30 +33,32 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'boys.brain.v1.quant_pb2', _
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z%boys/engine/gen/boys/brain/v1;brainv1\252\002\027Boys.Contracts.Brain.V1'
+  _globals['_DRIVEMODE']._serialized_start=1307
+  _globals['_DRIVEMODE']._serialized_end=1388
   _globals['_NAVPOINT']._serialized_start=72
   _globals['_NAVPOINT']._serialized_end=148
   _globals['_GETNAVCURVEREQUEST']._serialized_start=150
-  _globals['_GETNAVCURVEREQUEST']._serialized_end=231
-  _globals['_NAVCURVE']._serialized_start=233
-  _globals['_NAVCURVE']._serialized_end=307
-  _globals['_GETVALUATIONREQUEST']._serialized_start=309
-  _globals['_GETVALUATIONREQUEST']._serialized_end=368
-  _globals['_VALUATION']._serialized_start=371
-  _globals['_VALUATION']._serialized_end=590
-  _globals['_PROJECTOUTCOMESREQUEST']._serialized_start=592
-  _globals['_PROJECTOUTCOMESREQUEST']._serialized_end=639
-  _globals['_PROJECTION']._serialized_start=642
-  _globals['_PROJECTION']._serialized_end=818
-  _globals['_LISTOPENMARKETSREQUEST']._serialized_start=820
-  _globals['_LISTOPENMARKETSREQUEST']._serialized_end=859
-  _globals['_MARKET']._serialized_start=861
-  _globals['_MARKET']._serialized_end=951
-  _globals['_OPENMARKETS']._serialized_start=953
-  _globals['_OPENMARKETS']._serialized_end=1006
-  _globals['_PLACEUSERBETREQUEST']._serialized_start=1008
-  _globals['_PLACEUSERBETREQUEST']._serialized_end=1123
-  _globals['_BETACK']._serialized_start=1125
-  _globals['_BETACK']._serialized_end=1167
-  _globals['_QUANTSERVICE']._serialized_start=1170
-  _globals['_QUANTSERVICE']._serialized_end=1583
+  _globals['_GETNAVCURVEREQUEST']._serialized_end=277
+  _globals['_NAVCURVE']._serialized_start=279
+  _globals['_NAVCURVE']._serialized_end=353
+  _globals['_GETVALUATIONREQUEST']._serialized_start=355
+  _globals['_GETVALUATIONREQUEST']._serialized_end=460
+  _globals['_VALUATION']._serialized_start=463
+  _globals['_VALUATION']._serialized_end=682
+  _globals['_PROJECTOUTCOMESREQUEST']._serialized_start=684
+  _globals['_PROJECTOUTCOMESREQUEST']._serialized_end=777
+  _globals['_PROJECTION']._serialized_start=780
+  _globals['_PROJECTION']._serialized_end=956
+  _globals['_LISTOPENMARKETSREQUEST']._serialized_start=958
+  _globals['_LISTOPENMARKETSREQUEST']._serialized_end=997
+  _globals['_MARKET']._serialized_start=999
+  _globals['_MARKET']._serialized_end=1089
+  _globals['_OPENMARKETS']._serialized_start=1091
+  _globals['_OPENMARKETS']._serialized_end=1144
+  _globals['_PLACEUSERBETREQUEST']._serialized_start=1146
+  _globals['_PLACEUSERBETREQUEST']._serialized_end=1261
+  _globals['_BETACK']._serialized_start=1263
+  _globals['_BETACK']._serialized_end=1305
+  _globals['_QUANTSERVICE']._serialized_start=1391
+  _globals['_QUANTSERVICE']._serialized_end=1804
 # @@protoc_insertion_point(module_scope)

@@ -1,3 +1,4 @@
 date,league_id,league,team1,team2,spi1,spi2,prob1,probtie,prob2,proj_score1,proj_score2
 2023-08-12,2411,Barclays Premier League,Arsenal,Nottingham Forest,84.5,60.1,0.72,0.18,0.10,2.1,0.8
 2023-08-13,2411,Barclays Premier League,Chelsea,Liverpool,78.0,88.0,0.30,0.28,0.42,1.2,1.6
+2023-08-14,2411,Barclays Premier League,Overflow FC,Bad United,50.0,50.0,1.40,0.10,0.10,1.0,1.0

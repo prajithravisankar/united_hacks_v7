@@ -41,9 +41,11 @@ def test_odds_old_ddmmyy_and_missing_bookmaker_columns() -> None:
 
 def test_odds_handles_utf8_bom() -> None:
     rows = load_odds(FIX / "football_bom.csv")
+    # The BOM sits on the 'Date' column; if utf-8-sig stripping were removed,
+    # Date would be unreadable and load_odds would raise "no usable rows".
     assert len(rows) == 1
-    assert rows[0].home == "Tottenham"  # BOM did not mangle the first column
     assert rows[0].date == "2023-08-20"
+    assert rows[0].home == "Tottenham"
 
 
 def test_odds_empty_file_raises_clean_error() -> None:
@@ -56,7 +58,9 @@ def test_odds_empty_file_raises_clean_error() -> None:
 
 def test_probs_spi_parses_and_validates_range() -> None:
     rows = load_probs(FIX / "spi_matches.csv")
+    # fixture has 3 rows; the one with prob1=1.40 (outside [0,1]) must be dropped
     assert len(rows) == 2
+    assert all(r.home != "Overflow FC" for r in rows)
     assert rows[0].home == "Arsenal"
     assert rows[0].prob_home == 0.72
     for r in rows:

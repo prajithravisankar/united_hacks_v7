@@ -17,7 +17,7 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}"
     ports:
-      - "14333:1433"
+      - "127.0.0.1:14333:1433"   # loopback only — not reachable off-host
     volumes:
       - mssql_data:/var/opt/mssql
     healthcheck:
@@ -36,7 +36,7 @@ services:
       APP_USER: "${ORACLE_APP_USER:-boys}"
       APP_USER_PASSWORD: "${ORACLE_APP_PASSWORD:?set ORACLE_APP_PASSWORD in .env}"
     ports:
-      - "15211:1521"
+      - "127.0.0.1:15211:1521"   # loopback only — not reachable off-host
     volumes:
       - oracle_data:/opt/oracle/oradata
       # gvenzl runs *.sql/*.sh here once, on first initialization of an empty database.

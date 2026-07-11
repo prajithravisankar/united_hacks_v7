@@ -28,6 +28,8 @@ if _version_not_supported:
 class EngineServiceStub:
     """EngineService controls the deterministic replay ticker that drives the live
     demo (NAV streamed to browsers over WebSocket, separately).
+    Keyed on commitment_id — the same id brain uses — so replay, valuation, and
+    proof all correlate to one commitment (one goal = one commitment).
     """
 
     def __init__(self, channel):
@@ -61,6 +63,8 @@ class EngineServiceStub:
 class EngineServiceServicer:
     """EngineService controls the deterministic replay ticker that drives the live
     demo (NAV streamed to browsers over WebSocket, separately).
+    Keyed on commitment_id — the same id brain uses — so replay, valuation, and
+    proof all correlate to one commitment (one goal = one commitment).
     """
 
     def StartReplay(self, request, context):
@@ -121,6 +125,8 @@ def add_EngineServiceServicer_to_server(servicer, server):
 class EngineService:
     """EngineService controls the deterministic replay ticker that drives the live
     demo (NAV streamed to browsers over WebSocket, separately).
+    Keyed on commitment_id — the same id brain uses — so replay, valuation, and
+    proof all correlate to one commitment (one goal = one commitment).
     """
 
     @staticmethod

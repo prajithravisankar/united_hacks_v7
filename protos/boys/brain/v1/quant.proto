@@ -17,6 +17,14 @@ service QuantService {
   rpc PlaceUserBet(PlaceUserBetRequest) returns (BetAck);
 }
 
+// Per-leg mode ("you drive, or we drive"): AUTO = the model picks bets,
+// USER = the user picks. Passed on the read RPCs so brain's numbers reflect it.
+enum DriveMode {
+  DRIVE_MODE_UNSPECIFIED = 0;
+  DRIVE_MODE_AUTO = 1;
+  DRIVE_MODE_USER = 2;
+}
+
 // One day of the action-pool's value, plus the events that moved it.
 message NavPoint {
   string date = 1;                 // ISO-8601 date, e.g. "2026-01-15"
@@ -28,6 +36,7 @@ message GetNavCurveRequest {
   string commitment_id = 1;
   string start_date = 2;           // inclusive ISO date (window is clipped to available data)
   string end_date = 3;             // inclusive ISO date
+  DriveMode drive_mode = 4;
 }
 
 message NavCurve {
@@ -38,6 +47,7 @@ message NavCurve {
 message GetValuationRequest {
   string commitment_id = 1;
   string as_of = 2;                // ISO date
+  DriveMode drive_mode = 3;
 }
 
 // A valuation at an instant. take_home is floored at principal (never less).
@@ -51,6 +61,7 @@ message Valuation {
 
 message ProjectOutcomesRequest {
   string commitment_id = 1;
+  DriveMode drive_mode = 2;
 }
 
 // Cash-now vs let-it-ride analytics for the next milestone decision.

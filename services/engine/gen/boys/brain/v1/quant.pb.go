@@ -22,6 +22,57 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Per-leg mode ("you drive, or we drive"): AUTO = the model picks bets,
+// USER = the user picks. Passed on the read RPCs so brain's numbers reflect it.
+type DriveMode int32
+
+const (
+	DriveMode_DRIVE_MODE_UNSPECIFIED DriveMode = 0
+	DriveMode_DRIVE_MODE_AUTO        DriveMode = 1
+	DriveMode_DRIVE_MODE_USER        DriveMode = 2
+)
+
+// Enum value maps for DriveMode.
+var (
+	DriveMode_name = map[int32]string{
+		0: "DRIVE_MODE_UNSPECIFIED",
+		1: "DRIVE_MODE_AUTO",
+		2: "DRIVE_MODE_USER",
+	}
+	DriveMode_value = map[string]int32{
+		"DRIVE_MODE_UNSPECIFIED": 0,
+		"DRIVE_MODE_AUTO":        1,
+		"DRIVE_MODE_USER":        2,
+	}
+)
+
+func (x DriveMode) Enum() *DriveMode {
+	p := new(DriveMode)
+	*p = x
+	return p
+}
+
+func (x DriveMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DriveMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_boys_brain_v1_quant_proto_enumTypes[0].Descriptor()
+}
+
+func (DriveMode) Type() protoreflect.EnumType {
+	return &file_boys_brain_v1_quant_proto_enumTypes[0]
+}
+
+func (x DriveMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DriveMode.Descriptor instead.
+func (DriveMode) EnumDescriptor() ([]byte, []int) {
+	return file_boys_brain_v1_quant_proto_rawDescGZIP(), []int{0}
+}
+
 // One day of the action-pool's value, plus the events that moved it.
 type NavPoint struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -88,6 +139,7 @@ type GetNavCurveRequest struct {
 	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
 	StartDate     string                 `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"` // inclusive ISO date (window is clipped to available data)
 	EndDate       string                 `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`       // inclusive ISO date
+	DriveMode     DriveMode              `protobuf:"varint,4,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -141,6 +193,13 @@ func (x *GetNavCurveRequest) GetEndDate() string {
 		return x.EndDate
 	}
 	return ""
+}
+
+func (x *GetNavCurveRequest) GetDriveMode() DriveMode {
+	if x != nil {
+		return x.DriveMode
+	}
+	return DriveMode_DRIVE_MODE_UNSPECIFIED
 }
 
 type NavCurve struct {
@@ -199,6 +258,7 @@ type GetValuationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
 	AsOf          string                 `protobuf:"bytes,2,opt,name=as_of,json=asOf,proto3" json:"as_of,omitempty"` // ISO date
+	DriveMode     DriveMode              `protobuf:"varint,3,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,6 +305,13 @@ func (x *GetValuationRequest) GetAsOf() string {
 		return x.AsOf
 	}
 	return ""
+}
+
+func (x *GetValuationRequest) GetDriveMode() DriveMode {
+	if x != nil {
+		return x.DriveMode
+	}
+	return DriveMode_DRIVE_MODE_UNSPECIFIED
 }
 
 // A valuation at an instant. take_home is floored at principal (never less).
@@ -327,6 +394,7 @@ func (x *Valuation) GetUserTakeHome() *v1.Money {
 type ProjectOutcomesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
+	DriveMode     DriveMode              `protobuf:"varint,2,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -366,6 +434,13 @@ func (x *ProjectOutcomesRequest) GetCommitmentId() string {
 		return x.CommitmentId
 	}
 	return ""
+}
+
+func (x *ProjectOutcomesRequest) GetDriveMode() DriveMode {
+	if x != nil {
+		return x.DriveMode
+	}
+	return DriveMode_DRIVE_MODE_UNSPECIFIED
 }
 
 // Cash-now vs let-it-ride analytics for the next milestone decision.
@@ -721,26 +796,32 @@ const file_boys_brain_v1_quant_proto_rawDesc = "" +
 	"\bNavPoint\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12'\n" +
 	"\x03nav\x18\x02 \x01(\v2\x15.boys.common.v1.MoneyR\x03nav\x12\x16\n" +
-	"\x06events\x18\x03 \x03(\tR\x06events\"s\n" +
+	"\x06events\x18\x03 \x03(\tR\x06events\"\xac\x01\n" +
 	"\x12GetNavCurveRequest\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x02 \x01(\tR\tstartDate\x12\x19\n" +
-	"\bend_date\x18\x03 \x01(\tR\aendDate\"`\n" +
+	"\bend_date\x18\x03 \x01(\tR\aendDate\x127\n" +
+	"\n" +
+	"drive_mode\x18\x04 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\"`\n" +
 	"\bNavCurve\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12/\n" +
-	"\x06points\x18\x02 \x03(\v2\x17.boys.brain.v1.NavPointR\x06points\"O\n" +
+	"\x06points\x18\x02 \x03(\v2\x17.boys.brain.v1.NavPointR\x06points\"\x88\x01\n" +
 	"\x13GetValuationRequest\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x13\n" +
-	"\x05as_of\x18\x02 \x01(\tR\x04asOf\"\x8d\x02\n" +
+	"\x05as_of\x18\x02 \x01(\tR\x04asOf\x127\n" +
+	"\n" +
+	"drive_mode\x18\x03 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\"\x8d\x02\n" +
 	"\tValuation\x12'\n" +
 	"\x03nav\x18\x01 \x01(\v2\x15.boys.common.v1.MoneyR\x03nav\x123\n" +
 	"\tprincipal\x18\x02 \x01(\v2\x15.boys.common.v1.MoneyR\tprincipal\x12)\n" +
 	"\x04gain\x18\x03 \x01(\v2\x15.boys.common.v1.MoneyR\x04gain\x12:\n" +
 	"\rcarry_preview\x18\x04 \x01(\v2\x15.boys.common.v1.MoneyR\fcarryPreview\x12;\n" +
-	"\x0euser_take_home\x18\x05 \x01(\v2\x15.boys.common.v1.MoneyR\fuserTakeHome\"=\n" +
+	"\x0euser_take_home\x18\x05 \x01(\v2\x15.boys.common.v1.MoneyR\fuserTakeHome\"v\n" +
 	"\x16ProjectOutcomesRequest\x12#\n" +
-	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\"\xd4\x01\n" +
+	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x127\n" +
+	"\n" +
+	"drive_mode\x18\x02 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\"\xd4\x01\n" +
 	"\n" +
 	"Projection\x120\n" +
 	"\bcash_now\x18\x01 \x01(\v2\x15.boys.common.v1.MoneyR\acashNow\x120\n" +
@@ -764,7 +845,11 @@ const file_boys_brain_v1_quant_proto_rawDesc = "" +
 	"\x05stake\x18\x04 \x01(\v2\x15.boys.common.v1.MoneyR\x05stake\"<\n" +
 	"\x06BetAck\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason2\x9d\x03\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason*Q\n" +
+	"\tDriveMode\x12\x1a\n" +
+	"\x16DRIVE_MODE_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fDRIVE_MODE_AUTO\x10\x01\x12\x13\n" +
+	"\x0fDRIVE_MODE_USER\x10\x022\x9d\x03\n" +
 	"\fQuantService\x12I\n" +
 	"\vGetNavCurve\x12!.boys.brain.v1.GetNavCurveRequest\x1a\x17.boys.brain.v1.NavCurve\x12L\n" +
 	"\fGetValuation\x12\".boys.brain.v1.GetValuationRequest\x1a\x18.boys.brain.v1.Valuation\x12S\n" +
@@ -784,51 +869,56 @@ func file_boys_brain_v1_quant_proto_rawDescGZIP() []byte {
 	return file_boys_brain_v1_quant_proto_rawDescData
 }
 
+var file_boys_brain_v1_quant_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_boys_brain_v1_quant_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_boys_brain_v1_quant_proto_goTypes = []any{
-	(*NavPoint)(nil),               // 0: boys.brain.v1.NavPoint
-	(*GetNavCurveRequest)(nil),     // 1: boys.brain.v1.GetNavCurveRequest
-	(*NavCurve)(nil),               // 2: boys.brain.v1.NavCurve
-	(*GetValuationRequest)(nil),    // 3: boys.brain.v1.GetValuationRequest
-	(*Valuation)(nil),              // 4: boys.brain.v1.Valuation
-	(*ProjectOutcomesRequest)(nil), // 5: boys.brain.v1.ProjectOutcomesRequest
-	(*Projection)(nil),             // 6: boys.brain.v1.Projection
-	(*ListOpenMarketsRequest)(nil), // 7: boys.brain.v1.ListOpenMarketsRequest
-	(*Market)(nil),                 // 8: boys.brain.v1.Market
-	(*OpenMarkets)(nil),            // 9: boys.brain.v1.OpenMarkets
-	(*PlaceUserBetRequest)(nil),    // 10: boys.brain.v1.PlaceUserBetRequest
-	(*BetAck)(nil),                 // 11: boys.brain.v1.BetAck
-	(*v1.Money)(nil),               // 12: boys.common.v1.Money
+	(DriveMode)(0),                 // 0: boys.brain.v1.DriveMode
+	(*NavPoint)(nil),               // 1: boys.brain.v1.NavPoint
+	(*GetNavCurveRequest)(nil),     // 2: boys.brain.v1.GetNavCurveRequest
+	(*NavCurve)(nil),               // 3: boys.brain.v1.NavCurve
+	(*GetValuationRequest)(nil),    // 4: boys.brain.v1.GetValuationRequest
+	(*Valuation)(nil),              // 5: boys.brain.v1.Valuation
+	(*ProjectOutcomesRequest)(nil), // 6: boys.brain.v1.ProjectOutcomesRequest
+	(*Projection)(nil),             // 7: boys.brain.v1.Projection
+	(*ListOpenMarketsRequest)(nil), // 8: boys.brain.v1.ListOpenMarketsRequest
+	(*Market)(nil),                 // 9: boys.brain.v1.Market
+	(*OpenMarkets)(nil),            // 10: boys.brain.v1.OpenMarkets
+	(*PlaceUserBetRequest)(nil),    // 11: boys.brain.v1.PlaceUserBetRequest
+	(*BetAck)(nil),                 // 12: boys.brain.v1.BetAck
+	(*v1.Money)(nil),               // 13: boys.common.v1.Money
 }
 var file_boys_brain_v1_quant_proto_depIdxs = []int32{
-	12, // 0: boys.brain.v1.NavPoint.nav:type_name -> boys.common.v1.Money
-	0,  // 1: boys.brain.v1.NavCurve.points:type_name -> boys.brain.v1.NavPoint
-	12, // 2: boys.brain.v1.Valuation.nav:type_name -> boys.common.v1.Money
-	12, // 3: boys.brain.v1.Valuation.principal:type_name -> boys.common.v1.Money
-	12, // 4: boys.brain.v1.Valuation.gain:type_name -> boys.common.v1.Money
-	12, // 5: boys.brain.v1.Valuation.carry_preview:type_name -> boys.common.v1.Money
-	12, // 6: boys.brain.v1.Valuation.user_take_home:type_name -> boys.common.v1.Money
-	12, // 7: boys.brain.v1.Projection.cash_now:type_name -> boys.common.v1.Money
-	12, // 8: boys.brain.v1.Projection.ride_p10:type_name -> boys.common.v1.Money
-	12, // 9: boys.brain.v1.Projection.ride_p50:type_name -> boys.common.v1.Money
-	12, // 10: boys.brain.v1.Projection.ride_p90:type_name -> boys.common.v1.Money
-	8,  // 11: boys.brain.v1.OpenMarkets.markets:type_name -> boys.brain.v1.Market
-	12, // 12: boys.brain.v1.PlaceUserBetRequest.stake:type_name -> boys.common.v1.Money
-	1,  // 13: boys.brain.v1.QuantService.GetNavCurve:input_type -> boys.brain.v1.GetNavCurveRequest
-	3,  // 14: boys.brain.v1.QuantService.GetValuation:input_type -> boys.brain.v1.GetValuationRequest
-	5,  // 15: boys.brain.v1.QuantService.ProjectOutcomes:input_type -> boys.brain.v1.ProjectOutcomesRequest
-	7,  // 16: boys.brain.v1.QuantService.ListOpenMarkets:input_type -> boys.brain.v1.ListOpenMarketsRequest
-	10, // 17: boys.brain.v1.QuantService.PlaceUserBet:input_type -> boys.brain.v1.PlaceUserBetRequest
-	2,  // 18: boys.brain.v1.QuantService.GetNavCurve:output_type -> boys.brain.v1.NavCurve
-	4,  // 19: boys.brain.v1.QuantService.GetValuation:output_type -> boys.brain.v1.Valuation
-	6,  // 20: boys.brain.v1.QuantService.ProjectOutcomes:output_type -> boys.brain.v1.Projection
-	9,  // 21: boys.brain.v1.QuantService.ListOpenMarkets:output_type -> boys.brain.v1.OpenMarkets
-	11, // 22: boys.brain.v1.QuantService.PlaceUserBet:output_type -> boys.brain.v1.BetAck
-	18, // [18:23] is the sub-list for method output_type
-	13, // [13:18] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	13, // 0: boys.brain.v1.NavPoint.nav:type_name -> boys.common.v1.Money
+	0,  // 1: boys.brain.v1.GetNavCurveRequest.drive_mode:type_name -> boys.brain.v1.DriveMode
+	1,  // 2: boys.brain.v1.NavCurve.points:type_name -> boys.brain.v1.NavPoint
+	0,  // 3: boys.brain.v1.GetValuationRequest.drive_mode:type_name -> boys.brain.v1.DriveMode
+	13, // 4: boys.brain.v1.Valuation.nav:type_name -> boys.common.v1.Money
+	13, // 5: boys.brain.v1.Valuation.principal:type_name -> boys.common.v1.Money
+	13, // 6: boys.brain.v1.Valuation.gain:type_name -> boys.common.v1.Money
+	13, // 7: boys.brain.v1.Valuation.carry_preview:type_name -> boys.common.v1.Money
+	13, // 8: boys.brain.v1.Valuation.user_take_home:type_name -> boys.common.v1.Money
+	0,  // 9: boys.brain.v1.ProjectOutcomesRequest.drive_mode:type_name -> boys.brain.v1.DriveMode
+	13, // 10: boys.brain.v1.Projection.cash_now:type_name -> boys.common.v1.Money
+	13, // 11: boys.brain.v1.Projection.ride_p10:type_name -> boys.common.v1.Money
+	13, // 12: boys.brain.v1.Projection.ride_p50:type_name -> boys.common.v1.Money
+	13, // 13: boys.brain.v1.Projection.ride_p90:type_name -> boys.common.v1.Money
+	9,  // 14: boys.brain.v1.OpenMarkets.markets:type_name -> boys.brain.v1.Market
+	13, // 15: boys.brain.v1.PlaceUserBetRequest.stake:type_name -> boys.common.v1.Money
+	2,  // 16: boys.brain.v1.QuantService.GetNavCurve:input_type -> boys.brain.v1.GetNavCurveRequest
+	4,  // 17: boys.brain.v1.QuantService.GetValuation:input_type -> boys.brain.v1.GetValuationRequest
+	6,  // 18: boys.brain.v1.QuantService.ProjectOutcomes:input_type -> boys.brain.v1.ProjectOutcomesRequest
+	8,  // 19: boys.brain.v1.QuantService.ListOpenMarkets:input_type -> boys.brain.v1.ListOpenMarketsRequest
+	11, // 20: boys.brain.v1.QuantService.PlaceUserBet:input_type -> boys.brain.v1.PlaceUserBetRequest
+	3,  // 21: boys.brain.v1.QuantService.GetNavCurve:output_type -> boys.brain.v1.NavCurve
+	5,  // 22: boys.brain.v1.QuantService.GetValuation:output_type -> boys.brain.v1.Valuation
+	7,  // 23: boys.brain.v1.QuantService.ProjectOutcomes:output_type -> boys.brain.v1.Projection
+	10, // 24: boys.brain.v1.QuantService.ListOpenMarkets:output_type -> boys.brain.v1.OpenMarkets
+	12, // 25: boys.brain.v1.QuantService.PlaceUserBet:output_type -> boys.brain.v1.BetAck
+	21, // [21:26] is the sub-list for method output_type
+	16, // [16:21] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_boys_brain_v1_quant_proto_init() }
@@ -841,13 +931,14 @@ func file_boys_brain_v1_quant_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_boys_brain_v1_quant_proto_rawDesc), len(file_boys_brain_v1_quant_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_boys_brain_v1_quant_proto_goTypes,
 		DependencyIndexes: file_boys_brain_v1_quant_proto_depIdxs,
+		EnumInfos:         file_boys_brain_v1_quant_proto_enumTypes,
 		MessageInfos:      file_boys_brain_v1_quant_proto_msgTypes,
 	}.Build()
 	File_boys_brain_v1_quant_proto = out.File

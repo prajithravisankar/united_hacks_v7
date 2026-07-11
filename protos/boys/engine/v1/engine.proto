@@ -7,6 +7,8 @@ option csharp_namespace = "Boys.Contracts.Engine.V1";
 
 // EngineService controls the deterministic replay ticker that drives the live
 // demo (NAV streamed to browsers over WebSocket, separately).
+// Keyed on commitment_id — the same id brain uses — so replay, valuation, and
+// proof all correlate to one commitment (one goal = one commitment).
 service EngineService {
   rpc StartReplay(StartReplayRequest) returns (ReplayState);
   rpc Pause(PauseRequest) returns (ReplayState);
@@ -15,26 +17,28 @@ service EngineService {
 }
 
 message StartReplayRequest {
-  string goal_id = 1;
+  string commitment_id = 1;
   double speed = 2;                // multiplier, e.g. 30 for 30x
 }
 
 message PauseRequest {
-  string goal_id = 1;
+  string commitment_id = 1;
 }
 
 message SetSpeedRequest {
-  string goal_id = 1;
+  string commitment_id = 1;
   double speed = 2;
 }
 
 message GetReplayStateRequest {
-  string goal_id = 1;
+  string commitment_id = 1;
 }
 
 message ReplayState {
-  string goal_id = 1;
+  string commitment_id = 1;
   int32 position = 2;              // index into the replay timeline
   double speed = 3;
   bool running = 4;
+  string current_sim_date = 5;     // ISO date the replay has reached — the authoritative
+                                   // clock for ledger's deadline hard-gate
 }

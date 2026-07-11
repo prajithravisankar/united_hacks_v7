@@ -31,6 +31,8 @@ const (
 //
 // EngineService controls the deterministic replay ticker that drives the live
 // demo (NAV streamed to browsers over WebSocket, separately).
+// Keyed on commitment_id — the same id brain uses — so replay, valuation, and
+// proof all correlate to one commitment (one goal = one commitment).
 type EngineServiceClient interface {
 	StartReplay(ctx context.Context, in *StartReplayRequest, opts ...grpc.CallOption) (*ReplayState, error)
 	Pause(ctx context.Context, in *PauseRequest, opts ...grpc.CallOption) (*ReplayState, error)
@@ -92,6 +94,8 @@ func (c *engineServiceClient) GetReplayState(ctx context.Context, in *GetReplayS
 //
 // EngineService controls the deterministic replay ticker that drives the live
 // demo (NAV streamed to browsers over WebSocket, separately).
+// Keyed on commitment_id — the same id brain uses — so replay, valuation, and
+// proof all correlate to one commitment (one goal = one commitment).
 type EngineServiceServer interface {
 	StartReplay(context.Context, *StartReplayRequest) (*ReplayState, error)
 	Pause(context.Context, *PauseRequest) (*ReplayState, error)

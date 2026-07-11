@@ -23,7 +23,7 @@ const (
 
 type StartReplayRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	GoalId        string                 `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
+	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
 	Speed         float64                `protobuf:"fixed64,2,opt,name=speed,proto3" json:"speed,omitempty"` // multiplier, e.g. 30 for 30x
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -59,9 +59,9 @@ func (*StartReplayRequest) Descriptor() ([]byte, []int) {
 	return file_boys_engine_v1_engine_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *StartReplayRequest) GetGoalId() string {
+func (x *StartReplayRequest) GetCommitmentId() string {
 	if x != nil {
-		return x.GoalId
+		return x.CommitmentId
 	}
 	return ""
 }
@@ -75,7 +75,7 @@ func (x *StartReplayRequest) GetSpeed() float64 {
 
 type PauseRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	GoalId        string                 `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
+	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -110,16 +110,16 @@ func (*PauseRequest) Descriptor() ([]byte, []int) {
 	return file_boys_engine_v1_engine_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *PauseRequest) GetGoalId() string {
+func (x *PauseRequest) GetCommitmentId() string {
 	if x != nil {
-		return x.GoalId
+		return x.CommitmentId
 	}
 	return ""
 }
 
 type SetSpeedRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	GoalId        string                 `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
+	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
 	Speed         float64                `protobuf:"fixed64,2,opt,name=speed,proto3" json:"speed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -155,9 +155,9 @@ func (*SetSpeedRequest) Descriptor() ([]byte, []int) {
 	return file_boys_engine_v1_engine_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SetSpeedRequest) GetGoalId() string {
+func (x *SetSpeedRequest) GetCommitmentId() string {
 	if x != nil {
-		return x.GoalId
+		return x.CommitmentId
 	}
 	return ""
 }
@@ -171,7 +171,7 @@ func (x *SetSpeedRequest) GetSpeed() float64 {
 
 type GetReplayStateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	GoalId        string                 `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
+	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -206,21 +206,22 @@ func (*GetReplayStateRequest) Descriptor() ([]byte, []int) {
 	return file_boys_engine_v1_engine_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetReplayStateRequest) GetGoalId() string {
+func (x *GetReplayStateRequest) GetCommitmentId() string {
 	if x != nil {
-		return x.GoalId
+		return x.CommitmentId
 	}
 	return ""
 }
 
 type ReplayState struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GoalId        string                 `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"` // index into the replay timeline
-	Speed         float64                `protobuf:"fixed64,3,opt,name=speed,proto3" json:"speed,omitempty"`
-	Running       bool                   `protobuf:"varint,4,opt,name=running,proto3" json:"running,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CommitmentId   string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
+	Position       int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"` // index into the replay timeline
+	Speed          float64                `protobuf:"fixed64,3,opt,name=speed,proto3" json:"speed,omitempty"`
+	Running        bool                   `protobuf:"varint,4,opt,name=running,proto3" json:"running,omitempty"`
+	CurrentSimDate string                 `protobuf:"bytes,5,opt,name=current_sim_date,json=currentSimDate,proto3" json:"current_sim_date,omitempty"` // ISO date the replay has reached — the authoritative
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ReplayState) Reset() {
@@ -253,9 +254,9 @@ func (*ReplayState) Descriptor() ([]byte, []int) {
 	return file_boys_engine_v1_engine_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ReplayState) GetGoalId() string {
+func (x *ReplayState) GetCommitmentId() string {
 	if x != nil {
-		return x.GoalId
+		return x.CommitmentId
 	}
 	return ""
 }
@@ -281,26 +282,34 @@ func (x *ReplayState) GetRunning() bool {
 	return false
 }
 
+func (x *ReplayState) GetCurrentSimDate() string {
+	if x != nil {
+		return x.CurrentSimDate
+	}
+	return ""
+}
+
 var File_boys_engine_v1_engine_proto protoreflect.FileDescriptor
 
 const file_boys_engine_v1_engine_proto_rawDesc = "" +
 	"\n" +
-	"\x1bboys/engine/v1/engine.proto\x12\x0eboys.engine.v1\"C\n" +
-	"\x12StartReplayRequest\x12\x17\n" +
-	"\agoal_id\x18\x01 \x01(\tR\x06goalId\x12\x14\n" +
-	"\x05speed\x18\x02 \x01(\x01R\x05speed\"'\n" +
-	"\fPauseRequest\x12\x17\n" +
-	"\agoal_id\x18\x01 \x01(\tR\x06goalId\"@\n" +
-	"\x0fSetSpeedRequest\x12\x17\n" +
-	"\agoal_id\x18\x01 \x01(\tR\x06goalId\x12\x14\n" +
-	"\x05speed\x18\x02 \x01(\x01R\x05speed\"0\n" +
-	"\x15GetReplayStateRequest\x12\x17\n" +
-	"\agoal_id\x18\x01 \x01(\tR\x06goalId\"r\n" +
-	"\vReplayState\x12\x17\n" +
-	"\agoal_id\x18\x01 \x01(\tR\x06goalId\x12\x1a\n" +
+	"\x1bboys/engine/v1/engine.proto\x12\x0eboys.engine.v1\"O\n" +
+	"\x12StartReplayRequest\x12#\n" +
+	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x14\n" +
+	"\x05speed\x18\x02 \x01(\x01R\x05speed\"3\n" +
+	"\fPauseRequest\x12#\n" +
+	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\"L\n" +
+	"\x0fSetSpeedRequest\x12#\n" +
+	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x14\n" +
+	"\x05speed\x18\x02 \x01(\x01R\x05speed\"<\n" +
+	"\x15GetReplayStateRequest\x12#\n" +
+	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\"\xa8\x01\n" +
+	"\vReplayState\x12#\n" +
+	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x1a\n" +
 	"\bposition\x18\x02 \x01(\x05R\bposition\x12\x14\n" +
 	"\x05speed\x18\x03 \x01(\x01R\x05speed\x12\x18\n" +
-	"\arunning\x18\x04 \x01(\bR\arunning2\xc3\x02\n" +
+	"\arunning\x18\x04 \x01(\bR\arunning\x12(\n" +
+	"\x10current_sim_date\x18\x05 \x01(\tR\x0ecurrentSimDate2\xc3\x02\n" +
 	"\rEngineService\x12N\n" +
 	"\vStartReplay\x12\".boys.engine.v1.StartReplayRequest\x1a\x1b.boys.engine.v1.ReplayState\x12B\n" +
 	"\x05Pause\x12\x1c.boys.engine.v1.PauseRequest\x1a\x1b.boys.engine.v1.ReplayState\x12H\n" +

@@ -331,10 +331,10 @@ func (x *GoalVerdict) GetReasoning() string {
 
 type CheckProofRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	MilestoneId   string                 `protobuf:"bytes,1,opt,name=milestone_id,json=milestoneId,proto3" json:"milestone_id,omitempty"`
-	Claim         string                 `protobuf:"bytes,2,opt,name=claim,proto3" json:"claim,omitempty"`       // "Scored 87 on Midterm 1"
-	Evidence      []byte                 `protobuf:"bytes,3,opt,name=evidence,proto3" json:"evidence,omitempty"` // small inline evidence (image/pdf bytes)
-	Mime          string                 `protobuf:"bytes,4,opt,name=mime,proto3" json:"mime,omitempty"`         // "image/png", "application/pdf"
+	MilestoneId   string                 `protobuf:"bytes,1,opt,name=milestone_id,json=milestoneId,proto3" json:"milestone_id,omitempty"` // a milestone of one commitment (commitment_id in ledger/engine/quant)
+	Claim         string                 `protobuf:"bytes,2,opt,name=claim,proto3" json:"claim,omitempty"`                                // "Scored 87 on Midterm 1"
+	Evidence      []byte                 `protobuf:"bytes,3,opt,name=evidence,proto3" json:"evidence,omitempty"`                          // small inline evidence (image/pdf bytes)
+	Mime          string                 `protobuf:"bytes,4,opt,name=mime,proto3" json:"mime,omitempty"`                                  // "image/png", "application/pdf"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1b\x62oys/engine/v1/engine.proto\x12\x0e\x62oys.engine.v1\"4\n\x12StartReplayRequest\x12\x0f\n\x07goal_id\x18\x01 \x01(\t\x12\r\n\x05speed\x18\x02 \x01(\x01\"\x1f\n\x0cPauseRequest\x12\x0f\n\x07goal_id\x18\x01 \x01(\t\"1\n\x0fSetSpeedRequest\x12\x0f\n\x07goal_id\x18\x01 \x01(\t\x12\r\n\x05speed\x18\x02 \x01(\x01\"(\n\x15GetReplayStateRequest\x12\x0f\n\x07goal_id\x18\x01 \x01(\t\"P\n\x0bReplayState\x12\x0f\n\x07goal_id\x18\x01 \x01(\t\x12\x10\n\x08position\x18\x02 \x01(\x05\x12\r\n\x05speed\x18\x03 \x01(\x01\x12\x0f\n\x07running\x18\x04 \x01(\x08\x32\xc3\x02\n\rEngineService\x12N\n\x0bStartReplay\x12\".boys.engine.v1.StartReplayRequest\x1a\x1b.boys.engine.v1.ReplayState\x12\x42\n\x05Pause\x12\x1c.boys.engine.v1.PauseRequest\x1a\x1b.boys.engine.v1.ReplayState\x12H\n\x08SetSpeed\x12\x1f.boys.engine.v1.SetSpeedRequest\x1a\x1b.boys.engine.v1.ReplayState\x12T\n\x0eGetReplayState\x12%.boys.engine.v1.GetReplayStateRequest\x1a\x1b.boys.engine.v1.ReplayStateBDZ\'boys/engine/gen/boys/engine/v1;enginev1\xaa\x02\x18\x42oys.Contracts.Engine.V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1b\x62oys/engine/v1/engine.proto\x12\x0e\x62oys.engine.v1\":\n\x12StartReplayRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\r\n\x05speed\x18\x02 \x01(\x01\"%\n\x0cPauseRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\"7\n\x0fSetSpeedRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\r\n\x05speed\x18\x02 \x01(\x01\".\n\x15GetReplayStateRequest\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\"p\n\x0bReplayState\x12\x15\n\rcommitment_id\x18\x01 \x01(\t\x12\x10\n\x08position\x18\x02 \x01(\x05\x12\r\n\x05speed\x18\x03 \x01(\x01\x12\x0f\n\x07running\x18\x04 \x01(\x08\x12\x18\n\x10\x63urrent_sim_date\x18\x05 \x01(\t2\xc3\x02\n\rEngineService\x12N\n\x0bStartReplay\x12\".boys.engine.v1.StartReplayRequest\x1a\x1b.boys.engine.v1.ReplayState\x12\x42\n\x05Pause\x12\x1c.boys.engine.v1.PauseRequest\x1a\x1b.boys.engine.v1.ReplayState\x12H\n\x08SetSpeed\x12\x1f.boys.engine.v1.SetSpeedRequest\x1a\x1b.boys.engine.v1.ReplayState\x12T\n\x0eGetReplayState\x12%.boys.engine.v1.GetReplayStateRequest\x1a\x1b.boys.engine.v1.ReplayStateBDZ\'boys/engine/gen/boys/engine/v1;enginev1\xaa\x02\x18\x42oys.Contracts.Engine.V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,15 +33,15 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z\'boys/engine/gen/boys/engine/v1;enginev1\252\002\030Boys.Contracts.Engine.V1'
   _globals['_STARTREPLAYREQUEST']._serialized_start=47
-  _globals['_STARTREPLAYREQUEST']._serialized_end=99
-  _globals['_PAUSEREQUEST']._serialized_start=101
-  _globals['_PAUSEREQUEST']._serialized_end=132
-  _globals['_SETSPEEDREQUEST']._serialized_start=134
-  _globals['_SETSPEEDREQUEST']._serialized_end=183
-  _globals['_GETREPLAYSTATEREQUEST']._serialized_start=185
-  _globals['_GETREPLAYSTATEREQUEST']._serialized_end=225
-  _globals['_REPLAYSTATE']._serialized_start=227
-  _globals['_REPLAYSTATE']._serialized_end=307
-  _globals['_ENGINESERVICE']._serialized_start=310
-  _globals['_ENGINESERVICE']._serialized_end=633
+  _globals['_STARTREPLAYREQUEST']._serialized_end=105
+  _globals['_PAUSEREQUEST']._serialized_start=107
+  _globals['_PAUSEREQUEST']._serialized_end=144
+  _globals['_SETSPEEDREQUEST']._serialized_start=146
+  _globals['_SETSPEEDREQUEST']._serialized_end=201
+  _globals['_GETREPLAYSTATEREQUEST']._serialized_start=203
+  _globals['_GETREPLAYSTATEREQUEST']._serialized_end=249
+  _globals['_REPLAYSTATE']._serialized_start=251
+  _globals['_REPLAYSTATE']._serialized_end=363
+  _globals['_ENGINESERVICE']._serialized_start=366
+  _globals['_ENGINESERVICE']._serialized_end=689
 # @@protoc_insertion_point(module_scope)

@@ -5,9 +5,13 @@ price path. Exits non-zero on any hiccup so the caller can treat it as optional.
 """
 
 import json
+import os
 import sys
 import urllib.request
 
+if len(sys.argv) < 2:
+    print("usage: fetch_polymarket.py <output.json>", file=sys.stderr)
+    sys.exit(2)
 OUT = sys.argv[1]
 
 
@@ -18,6 +22,10 @@ def get(url: str):
 
 
 def main() -> int:
+    # Reproducibility: a present cache short-circuits the network so reruns stay offline.
+    if os.path.exists(OUT) and os.path.getsize(OUT) > 0:
+        print(f"skip (present): {OUT}")
+        return 0
     events = get("https://gamma-api.polymarket.com/events?closed=true&limit=60&order=volume&ascending=false")
     tokens: list[str] = []
     for ev in events:

@@ -48,7 +48,7 @@ message GoalVerdict {
 }
 
 message CheckProofRequest {
-  string milestone_id = 1;
+  string milestone_id = 1;         // a milestone of one commitment (commitment_id in ledger/engine/quant)
   string claim = 2;                // "Scored 87 on Midterm 1"
   bytes evidence = 3;              // small inline evidence (image/pdf bytes)
   string mime = 4;                 // "image/png", "application/pdf"

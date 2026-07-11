@@ -12,7 +12,10 @@ fetch() {  # url dest
   local url="$1" dest="$2"
   if [ -s "$RAW/$dest" ]; then echo "  skip (present): $dest"; return 0; fi
   echo "  fetching: $dest"
-  curl -fsSL --retry 3 -o "$RAW/$dest" "$url"
+  # Download to a temp path and move into place only on success, so a truncated
+  # download never leaves a half-file that future runs skip forever.
+  curl -fsSL --retry 3 -o "$RAW/$dest.part" "$url"
+  mv "$RAW/$dest.part" "$RAW/$dest"
 }
 
 echo "== football-data.co.uk (EPL results + opening & closing odds; completed seasons) =="
