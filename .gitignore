@@ -3,3 +3,35 @@ brainstorming.md
 idea.md
 tech.md
 backend-todo.md
+
+# Environment / secrets
+.env
+*.env
+!.env.example
+
+# .NET build artifacts
+**/bin/
+**/obj/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Go
+services/engine/engine
+*.test
+
+# Seed/raw data payloads (large, downloaded once; checksums are committed)
+data/raw/*
+!data/raw/.gitkeep
+data/seed/*
+!data/seed/.gitkeep
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
