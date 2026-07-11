@@ -115,6 +115,28 @@ services:
       retries: 15
       start_period: 30s
 
+  engine:
+    build: ./services/engine
+    container_name: boys-engine
+    depends_on:
+      brain:
+        condition: service_healthy
+    environment:
+      BRAIN_GRPC_ADDRESS: "brain:50061"
+      ENGINE_HTTP_ADDR: ":8090"
+      ENGINE_GRPC_ADDR: ":50071"
+      DEMO_COMMITMENT_ID: "1"
+      LOG_LEVEL: info
+    ports:
+      - "127.0.0.1:8090:8090"     # health + WebSocket live stream (B19)
+      - "127.0.0.1:50071:50071"   # EngineService gRPC
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8090/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
 volumes:
   mssql_data:
   oracle_data:
