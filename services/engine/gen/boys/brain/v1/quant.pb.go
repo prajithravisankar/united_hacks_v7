@@ -135,13 +135,14 @@ func (x *NavPoint) GetEvents() []string {
 }
 
 type GetNavCurveRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
-	StartDate     string                 `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"` // inclusive ISO date (window is clipped to available data)
-	EndDate       string                 `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`       // inclusive ISO date
-	DriveMode     DriveMode              `protobuf:"varint,4,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CommitmentId   string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
+	StartDate      string                 `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"` // inclusive ISO date (window is clipped to available data)
+	EndDate        string                 `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`       // inclusive ISO date
+	DriveMode      DriveMode              `protobuf:"varint,4,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
+	PrincipalCents int64                  `protobuf:"varint,5,opt,name=principal_cents,json=principalCents,proto3" json:"principal_cents,omitempty"` // ledger-supplied stake; the per-commitment curve scales the fund by this
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *GetNavCurveRequest) Reset() {
@@ -202,6 +203,13 @@ func (x *GetNavCurveRequest) GetDriveMode() DriveMode {
 	return DriveMode_DRIVE_MODE_UNSPECIFIED
 }
 
+func (x *GetNavCurveRequest) GetPrincipalCents() int64 {
+	if x != nil {
+		return x.PrincipalCents
+	}
+	return 0
+}
+
 type NavCurve struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
@@ -255,12 +263,14 @@ func (x *NavCurve) GetPoints() []*NavPoint {
 }
 
 type GetValuationRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
-	AsOf          string                 `protobuf:"bytes,2,opt,name=as_of,json=asOf,proto3" json:"as_of,omitempty"` // ISO date
-	DriveMode     DriveMode              `protobuf:"varint,3,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CommitmentId   string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
+	AsOf           string                 `protobuf:"bytes,2,opt,name=as_of,json=asOf,proto3" json:"as_of,omitempty"` // ISO date
+	DriveMode      DriveMode              `protobuf:"varint,3,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
+	PrincipalCents int64                  `protobuf:"varint,4,opt,name=principal_cents,json=principalCents,proto3" json:"principal_cents,omitempty"` // ledger-supplied stake (the protected floor)
+	StartDate      string                 `protobuf:"bytes,5,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`                 // ISO date the commitment started riding the fund
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *GetValuationRequest) Reset() {
@@ -312,6 +322,20 @@ func (x *GetValuationRequest) GetDriveMode() DriveMode {
 		return x.DriveMode
 	}
 	return DriveMode_DRIVE_MODE_UNSPECIFIED
+}
+
+func (x *GetValuationRequest) GetPrincipalCents() int64 {
+	if x != nil {
+		return x.PrincipalCents
+	}
+	return 0
+}
+
+func (x *GetValuationRequest) GetStartDate() string {
+	if x != nil {
+		return x.StartDate
+	}
+	return ""
 }
 
 // A valuation at an instant. take_home is floored at principal (never less).
@@ -392,11 +416,14 @@ func (x *Valuation) GetUserTakeHome() *v1.Money {
 }
 
 type ProjectOutcomesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommitmentId  string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
-	DriveMode     DriveMode              `protobuf:"varint,2,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CommitmentId   string                 `protobuf:"bytes,1,opt,name=commitment_id,json=commitmentId,proto3" json:"commitment_id,omitempty"`
+	DriveMode      DriveMode              `protobuf:"varint,2,opt,name=drive_mode,json=driveMode,proto3,enum=boys.brain.v1.DriveMode" json:"drive_mode,omitempty"`
+	PrincipalCents int64                  `protobuf:"varint,3,opt,name=principal_cents,json=principalCents,proto3" json:"principal_cents,omitempty"`
+	StartDate      string                 `protobuf:"bytes,4,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"` // ISO
+	AsOf           string                 `protobuf:"bytes,5,opt,name=as_of,json=asOf,proto3" json:"as_of,omitempty"`                // ISO
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ProjectOutcomesRequest) Reset() {
@@ -441,6 +468,27 @@ func (x *ProjectOutcomesRequest) GetDriveMode() DriveMode {
 		return x.DriveMode
 	}
 	return DriveMode_DRIVE_MODE_UNSPECIFIED
+}
+
+func (x *ProjectOutcomesRequest) GetPrincipalCents() int64 {
+	if x != nil {
+		return x.PrincipalCents
+	}
+	return 0
+}
+
+func (x *ProjectOutcomesRequest) GetStartDate() string {
+	if x != nil {
+		return x.StartDate
+	}
+	return ""
+}
+
+func (x *ProjectOutcomesRequest) GetAsOf() string {
+	if x != nil {
+		return x.AsOf
+	}
+	return ""
 }
 
 // Cash-now vs let-it-ride analytics for the next milestone decision.
@@ -796,32 +844,40 @@ const file_boys_brain_v1_quant_proto_rawDesc = "" +
 	"\bNavPoint\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12'\n" +
 	"\x03nav\x18\x02 \x01(\v2\x15.boys.common.v1.MoneyR\x03nav\x12\x16\n" +
-	"\x06events\x18\x03 \x03(\tR\x06events\"\xac\x01\n" +
+	"\x06events\x18\x03 \x03(\tR\x06events\"\xd5\x01\n" +
 	"\x12GetNavCurveRequest\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x02 \x01(\tR\tstartDate\x12\x19\n" +
 	"\bend_date\x18\x03 \x01(\tR\aendDate\x127\n" +
 	"\n" +
-	"drive_mode\x18\x04 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\"`\n" +
+	"drive_mode\x18\x04 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\x12'\n" +
+	"\x0fprincipal_cents\x18\x05 \x01(\x03R\x0eprincipalCents\"`\n" +
 	"\bNavCurve\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12/\n" +
-	"\x06points\x18\x02 \x03(\v2\x17.boys.brain.v1.NavPointR\x06points\"\x88\x01\n" +
+	"\x06points\x18\x02 \x03(\v2\x17.boys.brain.v1.NavPointR\x06points\"\xd0\x01\n" +
 	"\x13GetValuationRequest\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x12\x13\n" +
 	"\x05as_of\x18\x02 \x01(\tR\x04asOf\x127\n" +
 	"\n" +
-	"drive_mode\x18\x03 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\"\x8d\x02\n" +
+	"drive_mode\x18\x03 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\x12'\n" +
+	"\x0fprincipal_cents\x18\x04 \x01(\x03R\x0eprincipalCents\x12\x1d\n" +
+	"\n" +
+	"start_date\x18\x05 \x01(\tR\tstartDate\"\x8d\x02\n" +
 	"\tValuation\x12'\n" +
 	"\x03nav\x18\x01 \x01(\v2\x15.boys.common.v1.MoneyR\x03nav\x123\n" +
 	"\tprincipal\x18\x02 \x01(\v2\x15.boys.common.v1.MoneyR\tprincipal\x12)\n" +
 	"\x04gain\x18\x03 \x01(\v2\x15.boys.common.v1.MoneyR\x04gain\x12:\n" +
 	"\rcarry_preview\x18\x04 \x01(\v2\x15.boys.common.v1.MoneyR\fcarryPreview\x12;\n" +
-	"\x0euser_take_home\x18\x05 \x01(\v2\x15.boys.common.v1.MoneyR\fuserTakeHome\"v\n" +
+	"\x0euser_take_home\x18\x05 \x01(\v2\x15.boys.common.v1.MoneyR\fuserTakeHome\"\xd3\x01\n" +
 	"\x16ProjectOutcomesRequest\x12#\n" +
 	"\rcommitment_id\x18\x01 \x01(\tR\fcommitmentId\x127\n" +
 	"\n" +
-	"drive_mode\x18\x02 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\"\xd4\x01\n" +
+	"drive_mode\x18\x02 \x01(\x0e2\x18.boys.brain.v1.DriveModeR\tdriveMode\x12'\n" +
+	"\x0fprincipal_cents\x18\x03 \x01(\x03R\x0eprincipalCents\x12\x1d\n" +
+	"\n" +
+	"start_date\x18\x04 \x01(\tR\tstartDate\x12\x13\n" +
+	"\x05as_of\x18\x05 \x01(\tR\x04asOf\"\xd4\x01\n" +
 	"\n" +
 	"Projection\x120\n" +
 	"\bcash_now\x18\x01 \x01(\v2\x15.boys.common.v1.MoneyR\acashNow\x120\n" +

@@ -37,6 +37,7 @@ message GetNavCurveRequest {
   string start_date = 2;           // inclusive ISO date (window is clipped to available data)
   string end_date = 3;             // inclusive ISO date
   DriveMode drive_mode = 4;
+  int64 principal_cents = 5;       // ledger-supplied stake; the per-commitment curve scales the fund by this
 }
 
 message NavCurve {
@@ -48,6 +49,8 @@ message GetValuationRequest {
   string commitment_id = 1;
   string as_of = 2;                // ISO date
   DriveMode drive_mode = 3;
+  int64 principal_cents = 4;       // ledger-supplied stake (the protected floor)
+  string start_date = 5;           // ISO date the commitment started riding the fund
 }
 
 // A valuation at an instant. take_home is floored at principal (never less).
@@ -62,6 +65,9 @@ message Valuation {
 message ProjectOutcomesRequest {
   string commitment_id = 1;
   DriveMode drive_mode = 2;
+  int64 principal_cents = 3;
+  string start_date = 4;           // ISO
+  string as_of = 5;                // ISO
 }
 
 // Cash-now vs let-it-ride analytics for the next milestone decision.

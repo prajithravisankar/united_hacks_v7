@@ -18,3 +18,4 @@ This keeps old and new service builds able to talk to each other.
   - Added `DriveMode` enum + `drive_mode` field to the quant read requests (you-drive vs auto).
   - Added `current_sim_date` to `ReplayState` — the authoritative clock for ledger's deadline hard-gate.
   - Documented `milestone_id` ↔ `commitment_id` on `CheckProofRequest`.
+- **2026-07-11 — B09.** Added `principal_cents` (+ `start_date`/`as_of` where missing) to the quant read requests so brain can do the carry/floor valuation math from ledger-supplied commitment facts. Additive, wire-safe.

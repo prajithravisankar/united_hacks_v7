@@ -28,16 +28,18 @@ class NavPoint(_message.Message):
     def __init__(self, date: _Optional[str] = ..., nav: _Optional[_Union[_money_pb2.Money, _Mapping]] = ..., events: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class GetNavCurveRequest(_message.Message):
-    __slots__ = ("commitment_id", "start_date", "end_date", "drive_mode")
+    __slots__ = ("commitment_id", "start_date", "end_date", "drive_mode", "principal_cents")
     COMMITMENT_ID_FIELD_NUMBER: _ClassVar[int]
     START_DATE_FIELD_NUMBER: _ClassVar[int]
     END_DATE_FIELD_NUMBER: _ClassVar[int]
     DRIVE_MODE_FIELD_NUMBER: _ClassVar[int]
+    PRINCIPAL_CENTS_FIELD_NUMBER: _ClassVar[int]
     commitment_id: str
     start_date: str
     end_date: str
     drive_mode: DriveMode
-    def __init__(self, commitment_id: _Optional[str] = ..., start_date: _Optional[str] = ..., end_date: _Optional[str] = ..., drive_mode: _Optional[_Union[DriveMode, str]] = ...) -> None: ...
+    principal_cents: int
+    def __init__(self, commitment_id: _Optional[str] = ..., start_date: _Optional[str] = ..., end_date: _Optional[str] = ..., drive_mode: _Optional[_Union[DriveMode, str]] = ..., principal_cents: _Optional[int] = ...) -> None: ...
 
 class NavCurve(_message.Message):
     __slots__ = ("commitment_id", "points")
@@ -48,14 +50,18 @@ class NavCurve(_message.Message):
     def __init__(self, commitment_id: _Optional[str] = ..., points: _Optional[_Iterable[_Union[NavPoint, _Mapping]]] = ...) -> None: ...
 
 class GetValuationRequest(_message.Message):
-    __slots__ = ("commitment_id", "as_of", "drive_mode")
+    __slots__ = ("commitment_id", "as_of", "drive_mode", "principal_cents", "start_date")
     COMMITMENT_ID_FIELD_NUMBER: _ClassVar[int]
     AS_OF_FIELD_NUMBER: _ClassVar[int]
     DRIVE_MODE_FIELD_NUMBER: _ClassVar[int]
+    PRINCIPAL_CENTS_FIELD_NUMBER: _ClassVar[int]
+    START_DATE_FIELD_NUMBER: _ClassVar[int]
     commitment_id: str
     as_of: str
     drive_mode: DriveMode
-    def __init__(self, commitment_id: _Optional[str] = ..., as_of: _Optional[str] = ..., drive_mode: _Optional[_Union[DriveMode, str]] = ...) -> None: ...
+    principal_cents: int
+    start_date: str
+    def __init__(self, commitment_id: _Optional[str] = ..., as_of: _Optional[str] = ..., drive_mode: _Optional[_Union[DriveMode, str]] = ..., principal_cents: _Optional[int] = ..., start_date: _Optional[str] = ...) -> None: ...
 
 class Valuation(_message.Message):
     __slots__ = ("nav", "principal", "gain", "carry_preview", "user_take_home")
@@ -72,12 +78,18 @@ class Valuation(_message.Message):
     def __init__(self, nav: _Optional[_Union[_money_pb2.Money, _Mapping]] = ..., principal: _Optional[_Union[_money_pb2.Money, _Mapping]] = ..., gain: _Optional[_Union[_money_pb2.Money, _Mapping]] = ..., carry_preview: _Optional[_Union[_money_pb2.Money, _Mapping]] = ..., user_take_home: _Optional[_Union[_money_pb2.Money, _Mapping]] = ...) -> None: ...
 
 class ProjectOutcomesRequest(_message.Message):
-    __slots__ = ("commitment_id", "drive_mode")
+    __slots__ = ("commitment_id", "drive_mode", "principal_cents", "start_date", "as_of")
     COMMITMENT_ID_FIELD_NUMBER: _ClassVar[int]
     DRIVE_MODE_FIELD_NUMBER: _ClassVar[int]
+    PRINCIPAL_CENTS_FIELD_NUMBER: _ClassVar[int]
+    START_DATE_FIELD_NUMBER: _ClassVar[int]
+    AS_OF_FIELD_NUMBER: _ClassVar[int]
     commitment_id: str
     drive_mode: DriveMode
-    def __init__(self, commitment_id: _Optional[str] = ..., drive_mode: _Optional[_Union[DriveMode, str]] = ...) -> None: ...
+    principal_cents: int
+    start_date: str
+    as_of: str
+    def __init__(self, commitment_id: _Optional[str] = ..., drive_mode: _Optional[_Union[DriveMode, str]] = ..., principal_cents: _Optional[int] = ..., start_date: _Optional[str] = ..., as_of: _Optional[str] = ...) -> None: ...
 
 class Projection(_message.Message):
     __slots__ = ("cash_now", "ride_p10", "ride_p50", "ride_p90")
