@@ -74,6 +74,47 @@ services:
       retries: 15
       start_period: 30s
 
+  # One-shot: apply SQL Server migrations, then exit. Gates the ledger API so its schema always exists.
+  ledger-migrate:
+    build:
+      context: .
+      dockerfile: services/ledger/Dockerfile
+    image: boys-ledger:latest
+    container_name: boys-ledger-migrate
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      MSSQL_HOST: mssql
+      MSSQL_PORT: "1433"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}"
+    command: ["dotnet", "migrate/Boys.Ledger.Migrations.dll"]
+    restart: "no"
+
+  ledger:
+    image: boys-ledger:latest     # built by ledger-migrate above (same Dockerfile)
+    container_name: boys-ledger
+    depends_on:
+      mssql:
+        condition: service_healthy
+      ledger-migrate:
+        condition: service_completed_successfully
+      brain:
+        condition: service_started   # brain is optional at the edge (degraded-tolerant), so don't block on its health
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Ledger__SqlConnectionString: "Server=mssql,1433;Database=boys;User Id=sa;Password=${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env};TrustServerCertificate=True;Encrypt=False;Connect Timeout=10"
+      Ledger__BrainGrpcAddress: "http://brain:50061"
+      Ledger__BrainTimeoutMs: "3000"
+    ports:
+      - "127.0.0.1:8080:8080"     # ledger http (health now; REST in B16)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
 volumes:
   mssql_data:
   oracle_data:

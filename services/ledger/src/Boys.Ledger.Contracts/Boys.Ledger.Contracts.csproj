@@ -1,23 +1,24 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- gen/ is committed, generated C# (auto-generated) — don't nag about missing XML docs. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.35.1" />
     <PackageReference Include="Grpc.Net.Client" Version="2.80.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.82.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
   </ItemGroup>
 
-  <!-- Grpc.Tools generates C# from the shared protos at build time (into obj/). -->
-  <ItemGroup>
-    <Protobuf Include="..\..\..\..\protos\boys\**\*.proto" ProtoRoot="..\..\..\..\protos" GrpcServices="Both" />
-  </ItemGroup>
+  <!--
+    C# gRPC stubs are pre-generated into gen/ and committed (same pattern as services/engine/gen and
+    services/brain/gen). Regenerate with scripts/gen_protos.sh. This replaces build-time Grpc.Tools
+    codegen because that tool's bundled arm64 protoc segfaults inside the Docker build; committing the
+    output keeps one .proto source of truth AND a reliable container build. gen/*.cs compile via the
+    default glob.
+  -->
 
 </Project>

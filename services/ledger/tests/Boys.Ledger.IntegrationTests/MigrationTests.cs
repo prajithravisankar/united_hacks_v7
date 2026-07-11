@@ -1,4 +1,4 @@
-namespace Boys.Ledger.Tests;
+namespace Boys.Ledger.IntegrationTests;
 
 using Boys.Ledger.Migrations;
 using Dapper;

@@ -15,7 +15,11 @@ public static class DbConfig
         return dir?.FullName ?? throw new InvalidOperationException("repo root (docker-compose.yml) not found");
     }
 
-    public static string MigrationsDir() => Path.Combine(RepoRoot(), "services", "ledger", "migrations");
+    // MIGRATIONS_DIR lets the container point at the copied-in .sql files (no repo tree inside the image);
+    // on the host it is unset and we compute the path from the repo root as before.
+    public static string MigrationsDir() =>
+        Environment.GetEnvironmentVariable("MIGRATIONS_DIR")
+        ?? Path.Combine(RepoRoot(), "services", "ledger", "migrations");
 
     private static void LoadDotEnv()
     {

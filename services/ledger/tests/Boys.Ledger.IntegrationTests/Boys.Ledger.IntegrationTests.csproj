@@ -9,13 +9,14 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="FluentAssertions" Version="6.12.2" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
-    <PackageReference Include="Grpc.Net.Client" Version="2.80.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +27,7 @@
     <ProjectReference Include="..\..\src\Boys.Ledger.Api\Boys.Ledger.Api.csproj" />
     <ProjectReference Include="..\..\src\Boys.Ledger.Domain\Boys.Ledger.Domain.csproj" />
     <ProjectReference Include="..\..\src\Boys.Ledger.Contracts\Boys.Ledger.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Boys.Ledger.Migrations\Boys.Ledger.Migrations.csproj" />
   </ItemGroup>
 
 </Project>
