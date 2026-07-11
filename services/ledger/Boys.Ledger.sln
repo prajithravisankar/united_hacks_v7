@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boys.Ledger.Tests", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boys.Ledger.Contracts", "src\Boys.Ledger.Contracts\Boys.Ledger.Contracts.csproj", "{7087CAFF-9C40-445B-BF76-5AF74ADB64CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boys.Ledger.Migrations", "src\Boys.Ledger.Migrations\Boys.Ledger.Migrations.csproj", "{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,18 @@ Global
 		{7087CAFF-9C40-445B-BF76-5AF74ADB64CF}.Release|x64.Build.0 = Release|Any CPU
 		{7087CAFF-9C40-445B-BF76-5AF74ADB64CF}.Release|x86.ActiveCfg = Release|Any CPU
 		{7087CAFF-9C40-445B-BF76-5AF74ADB64CF}.Release|x86.Build.0 = Release|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Debug|x64.Build.0 = Debug|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Debug|x86.Build.0 = Debug|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Release|x64.ActiveCfg = Release|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Release|x64.Build.0 = Release|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Release|x86.ActiveCfg = Release|Any CPU
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +94,6 @@ Global
 		{0024F232-4AF2-4E85-A4A8-D115510D5962} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{8A123FA1-D3BD-4EE7-8305-964FCAF7279B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{7087CAFF-9C40-445B-BF76-5AF74ADB64CF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{EDB03B30-8DFA-4750-8E67-4F51F800F8CB} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
