@@ -16,9 +16,11 @@ import (
 
 	enginev1 "boys/engine/gen/boys/engine/v1"
 	"boys/engine/internal/brainclient"
+	"boys/engine/internal/clock"
 	"boys/engine/internal/config"
 	"boys/engine/internal/enginesvc"
 	"boys/engine/internal/httpapi"
+	"boys/engine/internal/replay"
 	"google.golang.org/grpc"
 )
 
@@ -28,6 +30,7 @@ const (
 	demoPrincipalCents = 10000
 	fundStartDate      = "2021-08-13"
 	fundEndDate        = "2024-05-19"
+	replayStepAt1x     = time.Second // one timeline point per second at 1x (≈33ms/point at 30x)
 )
 
 func main() {
@@ -69,9 +72,21 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
+	// Build the replay ticker from the fetched timeline (empty if brain was down — B20 makes it authoritative).
+	timeline := make([]replay.Point, len(points))
+	for i, p := range points {
+		timeline[i] = replay.Point{Date: p.Date, NavCents: p.NavCents, Events: p.Events}
+	}
+	ticker := replay.New(timeline, clock.RealClock{}, replayStepAt1x)
+	go ticker.Run(ctx)
+	go func() { // consume emissions so the ticker never stalls (B19 replaces this drain with the WebSocket hub)
+		for range ticker.Ticks() {
+		}
+	}()
+
 	httpSrv := &http.Server{Addr: cfg.HTTPAddr, Handler: httpapi.Router(ready.Load)}
 	grpcSrv := grpc.NewServer()
-	enginev1.RegisterEngineServiceServer(grpcSrv, enginesvc.New())
+	enginev1.RegisterEngineServiceServer(grpcSrv, enginesvc.New(ticker, cfg.DemoCommitmentID))
 	grpcLis, err := net.Listen("tcp", cfg.GRPCAddr)
 	if err != nil {
 		return err
