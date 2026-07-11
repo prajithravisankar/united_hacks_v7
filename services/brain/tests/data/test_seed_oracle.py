@@ -69,3 +69,15 @@ def test_base_rate_query_is_sane(oracle_conn) -> None:  # type: ignore[no-untype
     )
     home_win_rate = float(cur.fetchone()[0])
     assert 0.30 < home_win_rate < 0.60  # EPL home advantage sits ~0.43-0.48
+
+
+def test_team_cannot_play_itself(oracle_conn) -> None:  # type: ignore[no-untyped-def]
+    """R2: ck_fm_distinct_teams rejects a fixture where home == away."""
+    cur = oracle_conn.cursor()
+    with pytest.raises(Exception):
+        cur.execute(
+            "INSERT INTO fact_match (season_id, home_team_id, away_team_id, match_date) VALUES ("
+            "(SELECT MIN(season_id) FROM dim_season), (SELECT MIN(team_id) FROM dim_team), "
+            "(SELECT MIN(team_id) FROM dim_team), DATE '2019-01-01')"
+        )
+    oracle_conn.rollback()

@@ -61,7 +61,8 @@ def apply_ddl(cur: oracledb.Cursor) -> None:
             cur.execute(stmt)
         except oracledb.DatabaseError as exc:
             (err,) = exc.args
-            if err.code in (955, 1408):  # name already used / column already indexed
+            # 955 name already used / 1408 column already indexed / 2264 constraint name already used
+            if err.code in (955, 1408, 2264):
                 continue
             raise
 

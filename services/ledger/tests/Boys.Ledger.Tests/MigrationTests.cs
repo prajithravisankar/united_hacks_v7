@@ -147,4 +147,14 @@ public sealed class MigrationTests : IClassFixture<SqlServerFixture>
         Assert.Throws<SqlException>(() =>
             c.Execute("DELETE FROM ledger_postings WHERE txn_id = @t", new { t = txn }));
     }
+
+    [SkippableFact]
+    public void Negative_nav_snapshot_is_rejected()
+    {
+        using var c = Conn();
+        var commitId = InsertValidCommitment(c);
+        Assert.Throws<SqlException>(() => c.Execute(
+            "INSERT INTO nav_snapshots (commitment_id, as_of_date, nav_cents) VALUES (@c, '2026-01-01', -1)",
+            new { c = commitId }));
+    }
 }
