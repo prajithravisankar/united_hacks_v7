@@ -14,7 +14,17 @@ import oracledb
 
 from app.data.parsers import MatchOdds, load_odds
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+def _repo_root() -> Path:
+    """Repo root on the host; a safe fallback in the container (where these files are
+    absent — the brain only calls connect(), not the file-based load/apply_ddl)."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "docker-compose.yml").exists():
+            return parent
+    return here.parents[0]
+
+
+REPO_ROOT = _repo_root()
 DDL_FILE = REPO_ROOT / "docker" / "oracle" / "init" / "01_warehouse.sql"
 RAW = REPO_ROOT / "data" / "raw"
 

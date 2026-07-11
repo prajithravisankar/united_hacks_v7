@@ -6,6 +6,7 @@ from typing import Any
 
 import grpc
 
+from app.config import get_settings
 from app.quant import repo
 from app.quant.engine import (
     AUTO,
@@ -15,8 +16,27 @@ from app.quant.engine import (
     MarketNotFound,
     QuantEngine,
 )
-from boys.brain.v1 import quant_pb2, quant_pb2_grpc, referee_pb2_grpc
+from app.referee.models import Verdict, Verifiability
+from app.referee.service import (
+    InvalidGoal,
+    MilestoneSpec,
+    OversizedEvidence,
+    RefereeService,
+    make_referee_service,
+)
+from boys.brain.v1 import quant_pb2, quant_pb2_grpc, referee_pb2, referee_pb2_grpc
 from boys.common.v1 import money_pb2
+
+_PROTO_VERDICT = {
+    Verdict.ACCEPT: referee_pb2.VERDICT_ACCEPT,
+    Verdict.REVISE: referee_pb2.VERDICT_REVISE,
+    Verdict.REJECT: referee_pb2.VERDICT_REJECT,
+}
+_PROTO_VERIF = {
+    Verifiability.STRONG: referee_pb2.VERIFIABILITY_STRONG,
+    Verifiability.WEAK: referee_pb2.VERIFIABILITY_WEAK,
+    Verifiability.NONE: referee_pb2.VERIFIABILITY_NONE,
+}
 
 MAX_USER_STAKE_CENTS = 100_000  # demo cap for a user-driven bet
 
@@ -126,4 +146,42 @@ class QuantServicer(quant_pb2_grpc.QuantServiceServicer):  # type: ignore[misc]
 
 
 class RefereeServicer(referee_pb2_grpc.RefereeServiceServicer):  # type: ignore[misc]
-    """Implemented in B10 (ValidateGoal, CheckProof)."""
+    def __init__(self, service: RefereeService | None = None):
+        self._svc = service  # injectable for tests; else built from settings
+
+    def _service(self) -> RefereeService:
+        if self._svc is None:
+            settings = get_settings()
+            self._svc = make_referee_service(settings.ai_mode, settings.gemini_api_key)
+        return self._svc
+
+    def ValidateGoal(self, request: Any, context: Any) -> Any:
+        milestones = [
+            MilestoneSpec(m.ordinal, m.description, m.target_metric, m.due_date)
+            for m in request.milestones
+        ]
+        try:
+            v = self._service().validate_goal(request.goal_text, request.deadline, milestones)
+            return referee_pb2.GoalVerdict(
+                verdict=_PROTO_VERDICT[v.verdict],
+                verifiability=_PROTO_VERIF[v.verifiability],
+                required_proof_type=v.required_proof_type,
+                suggested_rewrite=v.suggested_rewrite,
+                reasoning=v.reasoning,
+            )
+        except InvalidGoal as exc:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
+
+    def CheckProof(self, request: Any, context: Any) -> Any:
+        try:
+            p = self._service().check_proof(
+                request.milestone_id, request.claim, request.evidence, request.mime
+            )
+            return referee_pb2.ProofVerdict(
+                supports_claim=p.supports_claim,
+                confidence=p.confidence,
+                reasoning=p.reasoning,
+                insufficiency_reason=p.insufficiency_reason,
+            )
+        except OversizedEvidence as exc:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
