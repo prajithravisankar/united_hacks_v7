@@ -247,6 +247,30 @@ public sealed class SettlementServiceTests : IClassFixture<SqlServerFixture>
     }
 
     [SkippableFact]
+    public async Task Success_receipt_is_reconciled_from_the_ledger_not_the_recomputed_plan()
+    {
+        // R4 audit fix: the receipt is built from what the ledger ACTUALLY moved, so it can never diverge
+        // from the money — even on an idempotent replay where the pool-dependent bonus would recompute.
+        using var c = Conn();
+        var (cid, crepo, lrepo, lsvc) = DriveTo(c, Succeeded);
+        await lrepo.PostAsync(lsvc.BuildTransfer(null, new[]
+        {
+            new Posting(LedgerAccount.WinnersBonusPool, +100_000),
+            new Posting(LedgerAccount.ActionPool, -100_000),
+        }, Key()));
+        var settle = Settlement(crepo, lrepo, lsvc, nav: 15_500);
+
+        var receipt = await settle.SettleAsync(cid);
+        var replay = await settle.SettleAsync(cid);  // idempotent replay
+
+        var balances = await lrepo.GetCommitmentBalancesAsync(cid);
+        receipt.TakeHomeCents.Should().Be(balances[LedgerAccount.UserYield]);      // == what the ledger paid
+        receipt.CarryCents.Should().Be(balances[LedgerAccount.HouseCarry]);
+        receipt.BonusCents.Should().Be(-balances[LedgerAccount.WinnersBonusPool]); // == the actual pool draw
+        replay.Should().BeEquivalentTo(receipt);                                   // the replay agrees
+    }
+
+    [SkippableFact]
     public async Task A_commitment_that_is_not_terminal_cannot_be_settled()
     {
         using var c = Conn();
@@ -259,6 +283,33 @@ public sealed class SettlementServiceTests : IClassFixture<SqlServerFixture>
         var act = () => settle.SettleAsync(cid);
 
         await act.Should().ThrowAsync<IllegalTransitionException>();
+    }
+
+    [SkippableFact]
+    public async Task Event_trail_receipt_and_ledger_tell_one_consistent_story()
+    {
+        // R4: the three records of a settlement must agree — the event trail (what happened), the receipt
+        // (what we told the user), and the ledger (what actually moved).
+        using var c = Conn();
+        var (cid, crepo, lrepo, lsvc) = DriveTo(c, CashedOut);
+
+        var receipt = await Settlement(crepo, lrepo, lsvc, nav: 15_500).SettleAsync(cid);
+
+        // 1. the event trail replays to settled and shows the cash-out then the settle
+        var events = await crepo.GetEventsAsync(cid);
+        var replayed = Draft;
+        foreach (var e in events)
+        {
+            replayed = CommitmentStates.FromDb(e.ToState);
+        }
+
+        replayed.Should().Be(Settled);
+        events.Should().Contain(e => e.Command == "cash_out").And.Contain(e => e.Command == "settle");
+
+        // 2. the receipt matches what the ledger actually paid
+        var balances = await lrepo.GetCommitmentBalancesAsync(cid);
+        balances[LedgerAccount.UserYield].Should().Be(receipt.TakeHomeCents);
+        balances[LedgerAccount.HouseCarry].Should().Be(receipt.CarryCents);
     }
 
     private static async Task<int> SettlementCountAsync(SqlConnection c, int commitmentId)

@@ -38,3 +38,6 @@ data/seed/*
 .DS_Store
 .idea/
 .vscode/
+
+# .NET test coverage
+TestResults/

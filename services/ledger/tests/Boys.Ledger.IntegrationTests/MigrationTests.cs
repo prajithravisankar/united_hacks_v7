@@ -140,8 +140,9 @@ public sealed class MigrationTests : IClassFixture<SqlServerFixture>
         var txn = Guid.NewGuid();
         c.Execute("INSERT INTO ledger_transactions (txn_id, idempotency_key) VALUES (@t, @k)",
             new { t = txn, k = Guid.NewGuid().ToString() });
-        c.Execute("INSERT INTO ledger_postings (txn_id, account, delta_cents) VALUES (@t, 'USER_ESCROW', 10000)",
-            new { t = txn });
+        // A balanced pair (not a lone posting) so this trigger test never pollutes the conservation invariant.
+        c.Execute("INSERT INTO ledger_postings (txn_id, account, delta_cents) VALUES "
+            + "(@t, 'USER_ESCROW', 10000), (@t, 'ACTION_POOL', -10000)", new { t = txn });
         Assert.Throws<SqlException>(() =>
             c.Execute("UPDATE ledger_postings SET delta_cents = 0 WHERE txn_id = @t", new { t = txn }));
         Assert.Throws<SqlException>(() =>

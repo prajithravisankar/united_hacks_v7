@@ -73,27 +73,46 @@ public sealed class SettlementService
                          ?? throw new CommitmentNotFoundException(commitmentId);
         var navCents = await FetchNavAsync(commitmentId, commitment, cancellationToken);
 
-        var key = $"settle:{commitmentId}";  // commitment-derived -> settlement is exactly-once per commitment
+        var key = $"sys:settle:{commitmentId}";  // reserved system key -> exactly-once + unforgeable
 
         // 1. Move the money (idempotent + serialized per commitment). Success recomputes a smaller bonus if
         //    the shared winners pool can't cover the target.
-        var plan = await ComputeAndPostAsync(commitmentId, type, commitment.StakeCents, navCents, key, cancellationToken);
+        await ComputeAndPostAsync(commitmentId, type, commitment.StakeCents, navCents, key, cancellationToken);
+        // The receipt is reconstructed from what the ledger ACTUALLY moved (not the recomputed plan), so an
+        // idempotent replay can never write a receipt that disagrees with the posted money.
+        var receipt = await ReconcileReceiptFromLedgerAsync(commitmentId, type, commitment.StakeCents, navCents, cancellationToken);
         // 2. Record the receipt BEFORE flipping to settled — a crash between the two must never leave a
         //    settled commitment with no receipt (which would brick the settle endpoint forever).
-        await InsertReceiptAsync(commitmentId, plan.Receipt, key, cancellationToken);
+        await InsertReceiptAsync(commitmentId, receipt, key, cancellationToken);
         // 3. Flip the state to settled (idempotent by the same key).
-        await _commitments.TransitionAsync(commitmentId, CommitmentCommand.Settle, isFinalLeg: false, key, cancellationToken);
+        await _commitments.TransitionAsync(commitmentId, CommitmentCommand.Settle, isFinalLeg: false, key, systemKey: true, cancellationToken);
 
         _logger.LogInformation(
             "settled commitment {CommitmentId} as {Type}: nav={Nav} take_home={TakeHome} carry={Carry} charity={Charity} bonus={Bonus}",
-            commitmentId, type, navCents, plan.Receipt.TakeHomeCents, plan.Receipt.CarryCents,
-            plan.Receipt.CharityCents, plan.Receipt.BonusCents);
+            commitmentId, type, navCents, receipt.TakeHomeCents, receipt.CarryCents, receipt.CharityCents, receipt.BonusCents);
 
-        return plan.Receipt;
+        return receipt;
     }
 
     public Task<SettlementReceipt?> GetReceiptAsync(int commitmentId, CancellationToken cancellationToken = default)
         => ReadReceiptAsync(commitmentId, cancellationToken);
+
+    /// <summary>Builds the receipt from what the ledger ACTUALLY moved for this commitment (not the recomputed
+    /// plan), so the receipt can never diverge from the money — even under an idempotent replay where the
+    /// pool-dependent Success bonus would recompute to a different value than was first posted.</summary>
+    private async Task<SettlementReceipt> ReconcileReceiptFromLedgerAsync(
+        int commitmentId, SettlementType type, long principalCents, long navCents, CancellationToken cancellationToken)
+    {
+        var balances = await _ledger.GetCommitmentBalancesAsync(commitmentId, cancellationToken);
+        long Delta(LedgerAccount account) => balances.TryGetValue(account, out var value) ? value : 0;
+
+        var takeHome = Delta(LedgerAccount.UserYield);
+        var carry = Delta(LedgerAccount.HouseCarry);
+        var charity = Delta(LedgerAccount.CharityPayable);
+        var bonus = type == SettlementType.Success ? Math.Max(0, -Delta(LedgerAccount.WinnersBonusPool)) : 0;
+
+        return new SettlementReceipt(type, principalCents, navCents, navCents - principalCents, carry, charity, bonus, takeHome);
+    }
 
     /// <summary>Builds the plan and posts it (idempotent by <paramref name="key"/>). For Success, the bonus
     /// is drawn from the shared winners pool; if a concurrent settlement drained it below the target, the

@@ -84,10 +84,10 @@ public static class PublicApiEndpoints
 
         // ---- cash-out / ride / settle ----
         api.MapPost("/goals/{id:int}/cashout", async (int id, ICommitmentRepository commitments) =>
-            Results.Json(new { state = (await commitments.TransitionAsync(id, CommitmentCommand.CashOut, false, $"cashout:{id}")).ToState.ToDb() }));
+            Results.Json(new { state = (await commitments.TransitionAsync(id, CommitmentCommand.CashOut, false, $"sys:cashout:{id}", systemKey: true)).ToState.ToDb() }));
 
         api.MapPost("/goals/{id:int}/ride", async (int id, ICommitmentRepository commitments) =>
-            Results.Json(new { state = (await commitments.TransitionAsync(id, CommitmentCommand.Ride, false, $"ride:{id}")).ToState.ToDb() }));
+            Results.Json(new { state = (await commitments.TransitionAsync(id, CommitmentCommand.Ride, false, $"sys:ride:{id}", systemKey: true)).ToState.ToDb() }));
 
         api.MapPost("/goals/{id:int}/settle", async (int id, SettlementService settlement) =>
             Results.Json(ReceiptJson(await settlement.SettleAsync(id))));

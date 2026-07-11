@@ -80,7 +80,7 @@ public sealed class VerificationService
         if (state is CommitmentState.Active or CommitmentState.Riding)
         {
             await _commitments.TransitionAsync(
-                commitmentId, CommitmentCommand.SubmitProof, isFinalLeg: false, idempotencyKey, cancellationToken);
+                commitmentId, CommitmentCommand.SubmitProof, isFinalLeg: false, idempotencyKey, cancellationToken: cancellationToken);
         }
         else if (state != CommitmentState.PendingVerification)
         {
@@ -126,7 +126,7 @@ public sealed class VerificationService
 
         // The commitment transition is the source of truth + idempotency; a double-click (same key) is a no-op.
         var result = await _commitments.TransitionAsync(
-            milestone.CommitmentId, command, isFinalLeg: false, idempotencyKey, cancellationToken);
+            milestone.CommitmentId, command, isFinalLeg: false, idempotencyKey, cancellationToken: cancellationToken);
 
         var milestoneState = decision == RefereeDecision.Approve ? "cleared" : "failed";
         await SetMilestoneStateAsync(milestoneId, milestoneState, cancellationToken);

@@ -20,11 +20,15 @@ public interface ICommitmentRepository
 {
     Task<CommitmentView> GetAsync(int commitmentId, CancellationToken cancellationToken = default);
 
+    /// <summary>Apply a command. <paramref name="systemKey"/> is true only for internal callers that pass a
+    /// reserved <c>sys:</c> key (settlement, activation, cash-out/ride); caller-facing paths leave it false so
+    /// a caller can never forge a system key and poison another commitment's transition.</summary>
     Task<TransitionResult> TransitionAsync(
         int commitmentId,
         CommitmentCommand command,
         bool isFinalLeg,
         string idempotencyKey,
+        bool systemKey = false,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CommitmentEventRecord>> GetEventsAsync(

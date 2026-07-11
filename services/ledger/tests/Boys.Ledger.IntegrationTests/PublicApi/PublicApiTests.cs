@@ -322,6 +322,68 @@ public sealed class PublicApiTests : IClassFixture<SqlServerFixture>
         doc.RootElement.GetProperty("degraded").GetBoolean().Should().BeTrue();
     }
 
+    private async Task<int> DriveToCashedOutAsync(HttpClient client, SqlConnection c)
+    {
+        var cid = await CreateAsync(client, GoalPayload(CharityId(c)));
+        var mid = MilestoneId(c, cid);
+        (await client.PostAsync($"/api/goals/{cid}/activate", null)).EnsureSuccessStatusCode();
+        await client.PostAsJsonAsync($"/api/goals/{cid}/proof", new
+        {
+            milestoneId = mid,
+            claim = "Scored 92",
+            evidenceBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes("x")),
+            mime = "image/png",
+            idempotencyKey = Guid.NewGuid().ToString("n"),
+        });
+        var dec = new HttpRequestMessage(HttpMethod.Post, $"/api/milestones/{mid}/decision")
+        { Content = JsonContent.Create(new { decision = "approve", idempotencyKey = Guid.NewGuid().ToString("n") }) };
+        dec.Headers.Add("X-User-Id", RefereeId(c).ToString());
+        (await client.SendAsync(dec)).EnsureSuccessStatusCode();
+        (await client.PostAsync($"/api/goals/{cid}/cashout", null)).EnsureSuccessStatusCode();
+        return cid;
+    }
+
+    [SkippableFact]
+    public async Task A_caller_cannot_forge_a_system_key_to_poison_another_settlement()
+    {
+        RequireDb();
+        using var c = _fx.Open();
+        await using var app = new PublicApiFactory();
+        using var client = app.CreateClient();
+
+        var victim = await DriveToCashedOutAsync(client, c);
+
+        var attacker = await CreateAsync(client, GoalPayload(CharityId(c)));
+        var amid = MilestoneId(c, attacker);
+        (await client.PostAsync($"/api/goals/{attacker}/activate", null)).EnsureSuccessStatusCode();
+
+        // (a) a reserved sys: key is rejected outright.
+        var reserved = await client.PostAsJsonAsync($"/api/goals/{attacker}/proof", new
+        {
+            milestoneId = amid,
+            claim = "x",
+            evidenceBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes("x")),
+            mime = "image/png",
+            idempotencyKey = $"sys:settle:{victim}",
+        });
+        reserved.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+
+        // (b) a non-sys forge is allowed but no longer collides with the system's sys:settle key.
+        await client.PostAsJsonAsync($"/api/goals/{attacker}/proof", new
+        {
+            milestoneId = amid,
+            claim = "x",
+            evidenceBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes("x")),
+            mime = "image/png",
+            idempotencyKey = $"settle:{victim}",
+        });
+
+        // the victim still settles cleanly and reaches 'settled'
+        (await client.PostAsync($"/api/goals/{victim}/settle", null)).EnsureSuccessStatusCode();
+        var state = await client.GetFromJsonAsync<JsonElement>($"/api/goals/{victim}");
+        state.GetProperty("state").GetString().Should().Be("settled");
+    }
+
     [SkippableFact]
     public async Task OpenApi_document_is_served_and_covers_the_public_paths()
     {

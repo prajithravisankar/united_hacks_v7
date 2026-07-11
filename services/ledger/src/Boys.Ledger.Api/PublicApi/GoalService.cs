@@ -68,12 +68,12 @@ public sealed class GoalService
     public async Task<CommitmentState> ActivateAsync(int commitmentId, CancellationToken cancellationToken = default)
     {
         var stake = await GetStakeAsync(commitmentId, cancellationToken);
-        var key = $"activate:{commitmentId}";  // derived -> activating twice is idempotent
+        var key = $"sys:activate:{commitmentId}";  // reserved system key -> unforgeable + idempotent
 
         // Escrow the stake, then move to active. Both keyed by the same derived key.
         await _ledger.PostAsync(_ledgerService.DepositAndEscrow(commitmentId, stake, key), cancellationToken);
         var result = await _commitments.TransitionAsync(
-            commitmentId, CommitmentCommand.Activate, isFinalLeg: false, key, cancellationToken);
+            commitmentId, CommitmentCommand.Activate, isFinalLeg: false, key, systemKey: true, cancellationToken);
         return result.ToState;
     }
 

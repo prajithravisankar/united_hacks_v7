@@ -45,9 +45,12 @@ public sealed class SqlCommitmentRepository : ICommitmentRepository
         CommitmentCommand command,
         bool isFinalLeg,
         string idempotencyKey,
+        bool systemKey = false,
         CancellationToken cancellationToken = default)
     {
-        if (idempotencyKey.StartsWith(SystemKeyPrefix, StringComparison.Ordinal))
+        // A caller may never use the reserved system namespace — that is what makes the system's derived keys
+        // (sys:settle:{id}, sys:activate:{id}, ...) unforgeable, so no caller can poison another commitment.
+        if (!systemKey && idempotencyKey.StartsWith(SystemKeyPrefix, StringComparison.Ordinal))
         {
             throw new LedgerValidationException($"idempotency key must not use the reserved '{SystemKeyPrefix}' prefix");
         }
