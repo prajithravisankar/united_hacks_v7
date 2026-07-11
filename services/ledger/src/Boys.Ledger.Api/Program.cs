@@ -1,10 +1,12 @@
 using Boys.Contracts.Brain.V1;
+using Boys.Ledger.Api.Commitments;
 using Boys.Ledger.Api.Configuration;
 using Boys.Ledger.Api.Grpc;
 using Boys.Ledger.Api.Http;
 using Boys.Ledger.Api.Infrastructure;
 using Boys.Ledger.Api.Ledger;
 using Boys.Ledger.Domain.Abstractions;
+using Boys.Ledger.Domain.Commitments;
 using Boys.Ledger.Domain.Ledger;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -34,6 +36,7 @@ builder.Services.AddScoped<IBrainClient, BrainClient>();
 // ---- ledger: pure plan-builder (singleton) + Dapper persistence (scoped) ----
 builder.Services.AddSingleton<LedgerService>();
 builder.Services.AddScoped<ILedgerRepository, SqlLedgerRepository>();
+builder.Services.AddScoped<ICommitmentRepository, SqlCommitmentRepository>();
 
 // ---- health: liveness (process up) vs readiness (SQL Server reachable) ----
 builder.Services.AddHealthChecks()
@@ -69,6 +72,26 @@ app.MapGet("/internal/commitments/{commitmentId:int}/balances", async (int commi
 {
     var balances = await repo.GetCommitmentBalancesAsync(commitmentId);
     return Results.Json(balances.ToDictionary(kv => kv.Key.ToDb(), kv => kv.Value));
+});
+
+// ---- commitment state + audit trail (diagnostic; the deadline gate is applied on read) ----
+app.MapGet("/internal/commitments/{commitmentId:int}/state", async (int commitmentId, ICommitmentRepository repo) =>
+{
+    var view = await repo.GetAsync(commitmentId);
+    return Results.Json(new { commitmentId = view.CommitmentId, state = view.State.ToDb(), deadline = view.Deadline });
+});
+
+app.MapGet("/internal/commitments/{commitmentId:int}/events", async (int commitmentId, ICommitmentRepository repo) =>
+{
+    var events = await repo.GetEventsAsync(commitmentId);
+    return Results.Json(events.Select(e => new
+    {
+        e.EventId,
+        e.FromState,
+        e.ToState,
+        e.Command,
+        e.OccurredAt,
+    }));
 });
 
 // Any unmatched route returns the standard envelope, not a blank 404.
