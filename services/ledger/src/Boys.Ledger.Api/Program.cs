@@ -3,7 +3,9 @@ using Boys.Ledger.Api.Configuration;
 using Boys.Ledger.Api.Grpc;
 using Boys.Ledger.Api.Http;
 using Boys.Ledger.Api.Infrastructure;
+using Boys.Ledger.Api.Ledger;
 using Boys.Ledger.Domain.Abstractions;
+using Boys.Ledger.Domain.Ledger;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -29,6 +31,10 @@ builder.Services.AddGrpcClient<RefereeService.RefereeServiceClient>(o => o.Addre
     .AddStandardResilienceHandler();
 builder.Services.AddScoped<IBrainClient, BrainClient>();
 
+// ---- ledger: pure plan-builder (singleton) + Dapper persistence (scoped) ----
+builder.Services.AddSingleton<LedgerService>();
+builder.Services.AddScoped<ILedgerRepository, SqlLedgerRepository>();
+
 // ---- health: liveness (process up) vs readiness (SQL Server reachable) ----
 builder.Services.AddHealthChecks()
     .AddCheck("live", () => HealthCheckResult.Healthy("process up"), tags: ["live"])
@@ -44,6 +50,26 @@ app.MapGet("/", () => Results.Json(new { service = "boys-ledger", status = "ok" 
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = r => r.Tags.Contains("live") });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = r => r.Tags.Contains("ready") });
+
+// ---- internal balance queries (no auth; diagnostic view of the money) ----
+app.MapGet("/internal/accounts/{account}/balance", async (string account, ILedgerRepository repo) =>
+{
+    if (!LedgerAccounts.TryFromDb(account.ToUpperInvariant(), out var parsed))
+    {
+        return Results.Json(
+            new ErrorEnvelope(new ErrorBody("not_found", $"unknown account '{account}'", null)),
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    var balance = await repo.GetAccountBalanceAsync(parsed);
+    return Results.Json(new { account = parsed.ToDb(), balanceCents = balance });
+});
+
+app.MapGet("/internal/commitments/{commitmentId:int}/balances", async (int commitmentId, ILedgerRepository repo) =>
+{
+    var balances = await repo.GetCommitmentBalancesAsync(commitmentId);
+    return Results.Json(balances.ToDictionary(kv => kv.Key.ToDb(), kv => kv.Value));
+});
 
 // Any unmatched route returns the standard envelope, not a blank 404.
 app.MapFallback(async (HttpContext ctx) =>
