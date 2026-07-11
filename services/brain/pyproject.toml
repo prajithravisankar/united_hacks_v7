@@ -4,8 +4,14 @@ version = "0.0.1"
 description = "BOYS brain service - quant fund + AI referee (owns Oracle)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "fastapi>=0.139.0",
     "grpcio>=1.82.1",
+    "httpx>=0.28.1",
     "oracledb>=4.0.1",
+    "protobuf>=7.35.1",
+    "pydantic-settings>=2.14.2",
+    "structlog>=26.1.0",
+    "uvicorn[standard]>=0.51.0",
 ]
 
 [dependency-groups]
@@ -43,3 +49,7 @@ exclude = ["gen/"]
 module = ["boys.*"]
 ignore_missing_imports = true
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["grpc", "grpc.*"]
+ignore_missing_imports = true

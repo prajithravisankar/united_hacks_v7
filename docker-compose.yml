@@ -48,6 +48,32 @@ services:
       retries: 20
       start_period: 90s
 
+  brain:
+    build: ./services/brain
+    container_name: boys-brain
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      ENV: local
+      ORACLE_HOST: oracle
+      ORACLE_PORT: "1521"
+      ORACLE_APP_USER: "${ORACLE_APP_USER:-boys}"
+      ORACLE_APP_PASSWORD: "${ORACLE_APP_PASSWORD:?set in .env}"
+      ORACLE_SERVICE: FREEPDB1
+      HTTP_PORT: "8081"
+      GRPC_PORT: "50061"
+      AI_MODE: seeded
+    ports:
+      - "127.0.0.1:8081:8081"     # http health
+      - "127.0.0.1:50061:50061"   # gRPC
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8081/health/ready',timeout=3).status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
 volumes:
   mssql_data:
   oracle_data:
