@@ -5,6 +5,7 @@ using Boys.Ledger.Api.Grpc;
 using Boys.Ledger.Api.Http;
 using Boys.Ledger.Api.Infrastructure;
 using Boys.Ledger.Api.Ledger;
+using Boys.Ledger.Api.PublicApi;
 using Boys.Ledger.Api.Settlement;
 using Boys.Ledger.Api.Verification;
 using Boys.Ledger.Domain.Abstractions;
@@ -48,6 +49,10 @@ builder.Services.AddScoped<VerificationService>();
 // ---- settlement engine (scoped) ----
 builder.Services.AddScoped<SettlementService>();
 
+// ---- public REST API (goal creation/activation) + OpenAPI ----
+builder.Services.AddScoped<GoalService>();
+builder.Services.AddOpenApi();
+
 // ---- health: liveness (process up) vs readiness (SQL Server reachable) ----
 builder.Services.AddHealthChecks()
     .AddCheck("live", () => HealthCheckResult.Healthy("process up"), tags: ["live"])
@@ -63,6 +68,10 @@ app.MapGet("/", () => Results.Json(new { service = "boys-ledger", status = "ok" 
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = r => r.Tags.Contains("live") });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = r => r.Tags.Contains("ready") });
+
+// The public REST edge (thin adapters over the domain services) + its OpenAPI document.
+app.MapOpenApi();
+app.MapPublicApi();
 
 // ---- internal balance queries (no auth; diagnostic view of the money) ----
 app.MapGet("/internal/accounts/{account}/balance", async (string account, ILedgerRepository repo) =>

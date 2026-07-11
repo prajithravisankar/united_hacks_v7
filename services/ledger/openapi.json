@@ -1,0 +1,658 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Boys.Ledger.Api | v1",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/accounts/{account}/balance": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/commitments/{commitmentId}/balances": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "commitmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/commitments/{commitmentId}/state": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "commitmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/commitments/{commitmentId}/events": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "commitmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/commitments/{commitmentId}/milestones/{milestoneId}/proof": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "commitmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "milestoneId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitProofRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/milestones/{milestoneId}/decision": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "milestoneId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefereeDecisionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/commitments/{commitmentId}/settle": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "commitmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/internal/commitments/{commitmentId}/receipt": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "commitmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateGoalRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/activate": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/proof": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProofRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/milestones/{id}/decision": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DecisionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/cashout": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/ride": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/settle": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/receipt": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/goals/{id}/valuation": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/pool": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/charities": {
+            "get": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CreateGoalRequest": {
+                "required": [
+                    "goalText",
+                    "stakeCents",
+                    "charityId",
+                    "driveMode",
+                    "deadline",
+                    "milestones"
+                ],
+                "type": "object",
+                "properties": {
+                    "goalText": {
+                        "type": "string"
+                    },
+                    "stakeCents": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "charityId": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "driveMode": {
+                        "type": "string"
+                    },
+                    "deadline": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "milestones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreateMilestone"
+                        }
+                    }
+                }
+            },
+            "CreateMilestone": {
+                "required": [
+                    "description",
+                    "targetMetric",
+                    "dueDate"
+                ],
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "targetMetric": {
+                        "type": "string"
+                    },
+                    "dueDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "DecisionRequest": {
+                "required": [
+                    "decision",
+                    "idempotencyKey"
+                ],
+                "type": "object",
+                "properties": {
+                    "decision": {
+                        "type": "string"
+                    },
+                    "idempotencyKey": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ProofRequest": {
+                "required": [
+                    "milestoneId",
+                    "claim",
+                    "evidenceBase64",
+                    "mime",
+                    "idempotencyKey"
+                ],
+                "type": "object",
+                "properties": {
+                    "milestoneId": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "claim": {
+                        "type": "string"
+                    },
+                    "evidenceBase64": {
+                        "type": "string"
+                    },
+                    "mime": {
+                        "type": "string"
+                    },
+                    "idempotencyKey": {
+                        "type": "string"
+                    }
+                }
+            },
+            "RefereeDecisionRequest": {
+                "required": [
+                    "decision",
+                    "refereeUserId",
+                    "idempotencyKey"
+                ],
+                "type": "object",
+                "properties": {
+                    "decision": {
+                        "type": "string"
+                    },
+                    "refereeUserId": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "idempotencyKey": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SubmitProofRequest": {
+                "required": [
+                    "claim",
+                    "evidenceBase64",
+                    "mime",
+                    "idempotencyKey"
+                ],
+                "type": "object",
+                "properties": {
+                    "claim": {
+                        "type": "string"
+                    },
+                    "evidenceBase64": {
+                        "type": "string"
+                    },
+                    "mime": {
+                        "type": "string"
+                    },
+                    "idempotencyKey": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Boys.Ledger.Api"
+        }
+    ]
+}

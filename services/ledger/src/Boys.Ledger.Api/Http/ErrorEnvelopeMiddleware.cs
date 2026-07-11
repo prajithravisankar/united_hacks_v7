@@ -28,6 +28,12 @@ public sealed class ErrorEnvelopeMiddleware
             _logger.LogWarning(ex, "Domain error {Code}", ex.Code);
             await WriteAsync(context, ErrorStatus.ForCode(ex.Code), ex.Code, ex.Message);
         }
+        catch (BadHttpRequestException ex)
+        {
+            // Malformed request (unparseable JSON body, etc.) — a client error, not a 500.
+            _logger.LogWarning(ex, "Malformed request");
+            await WriteAsync(context, ex.StatusCode, "bad_request", "the request was malformed");
+        }
         catch (Exception ex)
         {
             // Unexpected: log everything, tell the caller nothing but a correlation id.
