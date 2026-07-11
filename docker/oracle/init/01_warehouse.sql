@@ -43,3 +43,10 @@ CREATE INDEX ix_fm_away   ON fact_match(away_team_id);
 
 -- R2: a team cannot be its own opponent (ALTER so it applies to already-created tables too).
 ALTER TABLE fact_match ADD CONSTRAINT ck_fm_distinct_teams CHECK (home_team_id <> away_team_id);
+
+-- B08: the deterministic fund NAV curve (commitment-agnostic — the analytical SOURCE
+-- of the number; ledger's nav_snapshots is the per-commitment cash copy).
+CREATE TABLE fact_nav_curve (
+    curve_date DATE      PRIMARY KEY,
+    nav_cents  NUMBER(19) NOT NULL
+);

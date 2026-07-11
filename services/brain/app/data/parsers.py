@@ -23,9 +23,12 @@ class MatchOdds:
     home: str
     away: str
     result: str | None  # "H" | "D" | "A" | None
-    home_odds: float | None
+    home_odds: float | None  # opening (B365H/D/A)
     draw_odds: float | None
     away_odds: float | None
+    home_odds_close: float | None = None  # closing (B365CH/CD/CA) — the edge signal
+    draw_odds_close: float | None = None
+    away_odds_close: float | None = None
 
 
 @dataclass(frozen=True)
@@ -104,6 +107,9 @@ def load_odds(path: Path) -> list[MatchOdds]:
                 home_odds=_decimal_odds(row, "B365H"),
                 draw_odds=_decimal_odds(row, "B365D"),
                 away_odds=_decimal_odds(row, "B365A"),
+                home_odds_close=_decimal_odds(row, "B365CH"),
+                draw_odds_close=_decimal_odds(row, "B365CD"),
+                away_odds_close=_decimal_odds(row, "B365CA"),
             )
         )
     if not out:

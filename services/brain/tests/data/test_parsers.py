@@ -53,6 +53,14 @@ def test_odds_empty_file_raises_clean_error() -> None:
         load_odds(FIX / "football_empty.csv")
 
 
+def test_odds_parses_closing_columns() -> None:
+    rows = load_odds(FIX / "football_closing.csv")
+    assert len(rows) == 1
+    assert rows[0].home_odds == 2.50  # opening B365H
+    assert rows[0].home_odds_close == 2.10  # closing B365CH (the edge signal)
+    assert rows[0].away_odds_close == 3.60
+
+
 # ---- load_probs (FiveThirtyEight SPI) ----
 
 

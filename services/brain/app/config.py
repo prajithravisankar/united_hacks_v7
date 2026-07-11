@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 def _find_env_file() -> str:
     """Repo .env on the host; a missing path in the container (pydantic ignores it)."""
     for parent in Path(__file__).resolve().parents:
