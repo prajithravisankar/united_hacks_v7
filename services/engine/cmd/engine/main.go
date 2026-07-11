@@ -20,6 +20,7 @@ import (
 	"boys/engine/internal/config"
 	"boys/engine/internal/enginesvc"
 	"boys/engine/internal/httpapi"
+	"boys/engine/internal/hub"
 	"boys/engine/internal/replay"
 	"google.golang.org/grpc"
 )
@@ -31,6 +32,7 @@ const (
 	fundStartDate      = "2021-08-13"
 	fundEndDate        = "2024-05-19"
 	replayStepAt1x     = time.Second // one timeline point per second at 1x (≈33ms/point at 30x)
+	wsSendBuffer       = 64          // per-client queue depth before a slow browser is dropped
 )
 
 func main() {
@@ -79,12 +81,14 @@ func run() error {
 	}
 	ticker := replay.New(timeline, clock.RealClock{}, replayStepAt1x)
 	go ticker.Run(ctx)
-	go func() { // consume emissions so the ticker never stalls (B19 replaces this drain with the WebSocket hub)
-		for range ticker.Ticks() {
-		}
-	}()
 
-	httpSrv := &http.Server{Addr: cfg.HTTPAddr, Handler: httpapi.Router(ready.Load)}
+	// The WebSocket hub is the single consumer of the tick stream; it fans out to every connected browser.
+	liveHub := hub.NewHub(ticker, cfg.DemoCommitmentID, wsSendBuffer)
+	go liveHub.Run(ctx)
+
+	mux := httpapi.Router(ready.Load)
+	mux.HandleFunc("/ws/live", liveHub.Handler())
+	httpSrv := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
 	grpcSrv := grpc.NewServer()
 	enginev1.RegisterEngineServiceServer(grpcSrv, enginesvc.New(ticker, cfg.DemoCommitmentID))
 	grpcLis, err := net.Listen("tcp", cfg.GRPCAddr)
