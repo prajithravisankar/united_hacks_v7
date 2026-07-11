@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package boys.common.v1;
+
+option go_package = "boys/engine/gen/boys/common/v1;commonv1";
+option csharp_namespace = "Boys.Contracts.Common.V1";
+
+// Money is the ONLY money type in any BOYS contract. Always integer minor units
+// (cents) — floats never touch a balance. currency is ISO 4217 (e.g. "USD").
+message Money {
+  int64 cents = 1;
+  string currency = 2;
+}

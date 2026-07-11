@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package boys.brain.v1;
+
+option go_package = "boys/engine/gen/boys/brain/v1;brainv1";
+option csharp_namespace = "Boys.Contracts.Brain.V1";
+
+// RefereeService is brain's AI honesty layer: the SMART goal gate and the
+// milestone proof check. AI recommends; a human referee decides (in ledger).
+service RefereeService {
+  rpc ValidateGoal(ValidateGoalRequest) returns (GoalVerdict);
+  rpc CheckProof(CheckProofRequest) returns (ProofVerdict);
+}
+
+enum Verdict {
+  VERDICT_UNSPECIFIED = 0;
+  VERDICT_ACCEPT = 1;
+  VERDICT_REVISE = 2;
+  VERDICT_REJECT = 3;
+}
+
+enum Verifiability {
+  VERIFIABILITY_UNSPECIFIED = 0;
+  VERIFIABILITY_STRONG = 1;
+  VERIFIABILITY_WEAK = 2;
+  VERIFIABILITY_NONE = 3;
+}
+
+message MilestoneSpec {
+  int32 ordinal = 1;
+  string description = 2;
+  string target_metric = 3;        // e.g. "score >= 85"
+  string due_date = 4;             // ISO date
+}
+
+message ValidateGoalRequest {
+  string goal_text = 1;
+  string deadline = 2;             // ISO date
+  repeated MilestoneSpec milestones = 3;
+}
+
+message GoalVerdict {
+  Verdict verdict = 1;
+  Verifiability verifiability = 2;
+  string required_proof_type = 3;  // "grade_screenshot", "gps_activity", ...
+  string suggested_rewrite = 4;    // populated when verdict == REVISE/REJECT
+  string reasoning = 5;
+}
+
+message CheckProofRequest {
+  string milestone_id = 1;
+  string claim = 2;                // "Scored 87 on Midterm 1"
+  bytes evidence = 3;              // small inline evidence (image/pdf bytes)
+  string mime = 4;                 // "image/png", "application/pdf"
+}
+
+message ProofVerdict {
+  bool supports_claim = 1;
+  double confidence = 2;           // [0,1]
+  string reasoning = 3;
+  string insufficiency_reason = 4; // populated when supports_claim == false
+}

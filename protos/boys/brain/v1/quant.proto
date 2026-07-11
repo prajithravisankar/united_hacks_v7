@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package boys.brain.v1;
+
+import "boys/common/v1/money.proto";
+
+option go_package = "boys/engine/gen/boys/brain/v1;brainv1";
+option csharp_namespace = "Boys.Contracts.Brain.V1";
+
+// QuantService is brain's fund brain: the backtested NAV curve, valuations
+// (carry/floor-aware), cash-now-vs-ride projections, and user-driven bets.
+service QuantService {
+  rpc GetNavCurve(GetNavCurveRequest) returns (NavCurve);
+  rpc GetValuation(GetValuationRequest) returns (Valuation);
+  rpc ProjectOutcomes(ProjectOutcomesRequest) returns (Projection);
+  rpc ListOpenMarkets(ListOpenMarketsRequest) returns (OpenMarkets);
+  rpc PlaceUserBet(PlaceUserBetRequest) returns (BetAck);
+}
+
+// One day of the action-pool's value, plus the events that moved it.
+message NavPoint {
+  string date = 1;                 // ISO-8601 date, e.g. "2026-01-15"
+  boys.common.v1.Money nav = 2;    // action-pool value on that day
+  repeated string events = 3;      // human-readable ("Lakers cover +6", ...)
+}
+
+message GetNavCurveRequest {
+  string commitment_id = 1;
+  string start_date = 2;           // inclusive ISO date (window is clipped to available data)
+  string end_date = 3;             // inclusive ISO date
+}
+
+message NavCurve {
+  string commitment_id = 1;
+  repeated NavPoint points = 2;
+}
+
+message GetValuationRequest {
+  string commitment_id = 1;
+  string as_of = 2;                // ISO date
+}
+
+// A valuation at an instant. take_home is floored at principal (never less).
+message Valuation {
+  boys.common.v1.Money nav = 1;             // current action-pool value
+  boys.common.v1.Money principal = 2;       // original stake (the protected floor)
+  boys.common.v1.Money gain = 3;            // nav - principal (may be negative)
+  boys.common.v1.Money carry_preview = 4;   // 15% of gain if gain > 0, else 0
+  boys.common.v1.Money user_take_home = 5;  // principal + gain - carry, floored at principal
+}
+
+message ProjectOutcomesRequest {
+  string commitment_id = 1;
+}
+
+// Cash-now vs let-it-ride analytics for the next milestone decision.
+message Projection {
+  boys.common.v1.Money cash_now = 1;                 // == current take-home
+  boys.common.v1.Money ride_p10 = 2;                 // 10th percentile if you ride
+  boys.common.v1.Money ride_p50 = 3;                 // median if you ride
+  boys.common.v1.Money ride_p90 = 4;                 // 90th percentile if you ride
+}
+
+message ListOpenMarketsRequest {
+  string as_of = 1;                // ISO date
+}
+
+message Market {
+  string market_id = 1;
+  string description = 2;          // "Lakers vs Celtics — Lakers win"
+  double implied_prob = 3;         // de-vigged bookmaker probability [0,1]
+  double model_prob = 4;           // FiveThirtyEight probability [0,1]
+}
+
+message OpenMarkets {
+  repeated Market markets = 1;
+}
+
+message PlaceUserBetRequest {
+  string commitment_id = 1;
+  string market_id = 2;
+  string side = 3;                            // "yes" | "no"
+  boys.common.v1.Money stake = 4;             // drawn from the action pool
+}
+
+message BetAck {
+  bool accepted = 1;
+  string reason = 2;               // populated when accepted == false
+}
