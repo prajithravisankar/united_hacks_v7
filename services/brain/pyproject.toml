@@ -20,6 +20,7 @@ dev = [
     "grpcio-tools>=1.82.1",
     "mypy>=2.2.0",
     "pytest>=8.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.15.21",
 ]
 

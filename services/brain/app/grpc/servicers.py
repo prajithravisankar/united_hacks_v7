@@ -12,6 +12,7 @@ from app.quant.engine import (
     AUTO,
     USER,
     CommitmentNotFound,
+    EngineUnavailable,
     InvalidRequest,
     MarketNotFound,
     QuantEngine,
@@ -55,8 +56,16 @@ class QuantServicer(quant_pb2_grpc.QuantServiceServicer):  # type: ignore[misc]
 
     def _eng(self) -> QuantEngine:
         if self._engine is None:
-            self._engine = repo.load_engine()
+            try:
+                self._engine = repo.load_engine()
+            except Exception as exc:  # any Oracle/driver failure -> generic unavailable
+                raise EngineUnavailable("fund data store unavailable") from exc
         return self._engine
+
+    @staticmethod
+    def _unavailable(context: Any) -> None:
+        # Generic message: never surface the driver/DSN string to the caller.
+        context.abort(grpc.StatusCode.UNAVAILABLE, "fund data temporarily unavailable")
 
     def GetValuation(self, request: Any, context: Any) -> Any:
         try:
@@ -78,6 +87,8 @@ class QuantServicer(quant_pb2_grpc.QuantServiceServicer):  # type: ignore[misc]
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
         except CommitmentNotFound as exc:
             context.abort(grpc.StatusCode.NOT_FOUND, str(exc))
+        except EngineUnavailable:
+            self._unavailable(context)
 
     def GetNavCurve(self, request: Any, context: Any) -> Any:
         try:
@@ -94,6 +105,8 @@ class QuantServicer(quant_pb2_grpc.QuantServiceServicer):  # type: ignore[misc]
             )
         except CommitmentNotFound as exc:
             context.abort(grpc.StatusCode.NOT_FOUND, str(exc))
+        except EngineUnavailable:
+            self._unavailable(context)
 
     def ProjectOutcomes(self, request: Any, context: Any) -> Any:
         try:
@@ -114,9 +127,15 @@ class QuantServicer(quant_pb2_grpc.QuantServiceServicer):  # type: ignore[misc]
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
         except CommitmentNotFound as exc:
             context.abort(grpc.StatusCode.NOT_FOUND, str(exc))
+        except EngineUnavailable:
+            self._unavailable(context)
 
     def ListOpenMarkets(self, request: Any, context: Any) -> Any:
-        markets = self._eng().list_open_markets(request.as_of)
+        try:
+            markets = self._eng().list_open_markets(request.as_of)
+        except EngineUnavailable:
+            self._unavailable(context)
+            return None  # unreachable: abort() raises
         return quant_pb2.OpenMarkets(
             markets=[
                 quant_pb2.Market(
@@ -143,6 +162,8 @@ class QuantServicer(quant_pb2_grpc.QuantServiceServicer):  # type: ignore[misc]
             return quant_pb2.BetAck(accepted=False, reason="unknown market")
         except InvalidRequest as exc:
             return quant_pb2.BetAck(accepted=False, reason=str(exc))
+        except EngineUnavailable:
+            self._unavailable(context)
 
 
 class RefereeServicer(referee_pb2_grpc.RefereeServiceServicer):  # type: ignore[misc]

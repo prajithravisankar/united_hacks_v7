@@ -18,7 +18,7 @@ def load_engine() -> QuantEngine:
         cur.execute(
             "SELECT TO_CHAR(match_date,'YYYY-MM-DD'), home_odds, result "
             "FROM fact_match WHERE home_odds IS NOT NULL AND result IS NOT NULL "
-            "ORDER BY match_date DESC FETCH FIRST 20 ROWS ONLY"
+            "ORDER BY match_date DESC, home_team_id, away_team_id FETCH FIRST 20 ROWS ONLY"
         )
         markets = []
         for i, (date, home_odds, result) in enumerate(cur.fetchall()):

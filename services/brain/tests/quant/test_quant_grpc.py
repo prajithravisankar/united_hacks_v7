@@ -68,3 +68,40 @@ def test_grpc_not_found_when_before_data() -> None:
                 )
             )
         assert exc.value.code() == grpc.StatusCode.NOT_FOUND
+
+
+def _stub_lazy() -> Iterator[quant_pb2_grpc.QuantServiceStub]:
+    # No injected engine -> the servicer lazy-loads from Oracle on first call.
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
+    quant_pb2_grpc.add_QuantServiceServicer_to_server(QuantServicer(), server)
+    port = server.add_insecure_port("[::]:0")
+    server.start()
+    channel = grpc.insecure_channel(f"localhost:{port}")
+    try:
+        yield quant_pb2_grpc.QuantServiceStub(channel)
+    finally:
+        channel.close()
+        server.stop(None)
+
+
+def test_grpc_unavailable_when_oracle_down(monkeypatch: pytest.MonkeyPatch) -> None:
+    # R3: Oracle failure must map to a generic UNAVAILABLE, never leak the driver/DSN string.
+    from app.quant import repo
+
+    def _boom() -> QuantEngine:
+        raise RuntimeError("DPY-6005: cannot connect to 127.0.0.1:15211/FREEPDB1")
+
+    monkeypatch.setattr(repo, "load_engine", _boom)  # servicers holds this same module
+    for stub in _stub_lazy():
+        with pytest.raises(grpc.RpcError) as exc:
+            stub.GetValuation(
+                quant_pb2.GetValuationRequest(
+                    commitment_id="c1",
+                    principal_cents=10_000,
+                    start_date="2023-01-01",
+                    as_of="2023-06-01",
+                )
+            )
+        assert exc.value.code() == grpc.StatusCode.UNAVAILABLE
+        assert "DPY-6005" not in exc.value.details()  # driver string never surfaced
+        assert "15211" not in exc.value.details()

@@ -64,6 +64,19 @@ def test_you_drive_bet_diverges_from_auto() -> None:
     assert user.nav_cents == auto.nav_cents + 1_000  # user-mode curve diverged
 
 
+def test_you_drive_loss_clamps_nav_at_zero() -> None:
+    # R3: a user-driven loss bigger than the fund NAV must floor at 0, never go negative.
+    flat = [("2023-01-01", 100_000), ("2023-06-01", 100_000)]  # no fund growth
+    market = Market("mA", "A win", implied_prob=0.5, decimal_odds=2.0, resolved_yes=False)
+    e = QuantEngine(flat, [market])
+    pnl = e.place_user_bet("c1", "mA", "yes", 20_000, 100_000)  # "yes" loses -> -20_000
+    assert pnl == -20_000
+    val = e.get_valuation("c1", 10_000, "2023-01-01", "2023-06-01", USER)  # base nav 10_000
+    assert val.nav_cents == 0  # max(0, 10_000 - 20_000), not -10_000
+    curve = e.get_nav_curve("c1", 10_000, "2023-01-01", "2023-06-01", USER)
+    assert all(n >= 0 for _, n in curve)  # every point floored
+
+
 def test_place_bet_unknown_market() -> None:
     with pytest.raises(MarketNotFound):
         QuantEngine(CURVE).place_user_bet("c1", "nope", "yes", 1_000, 100_000)

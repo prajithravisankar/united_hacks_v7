@@ -72,6 +72,19 @@ def test_stake_respects_max_fraction_cap() -> None:
     assert bet.stake_cents == 5000  # 5% of 100_000, capped by max_fraction
 
 
+def test_stake_scales_with_drift_at_production_defaults() -> None:
+    # R3 regression: with the gate (1%) below the cap (2%), a drift landing *between*
+    # them must produce a stake proportional to the drift -- strictly under the cap.
+    # (When the gate == the cap, min(cap, drift) was always the cap: sizing was inert.)
+    small = select_bet(
+        mk(oh=3.0, od=3.0, oa=3.0, ch=2.9, cd=3.05, ca=3.05), 100_000
+    )  # drift ~0.011
+    big = select_bet(mk(oh=3.0, od=3.0, oa=3.0, ch=2.0, cd=3.5, ca=4.0), 100_000)  # drift ~0.149
+    assert small is not None and big is not None
+    assert big.stake_cents == 2000  # 2% cap of 100_000
+    assert 0 < small.stake_cents < big.stake_cents  # sub-cap drift -> smaller, live stake
+
+
 def test_selector_ignores_result_lookahead_safe() -> None:
     m = mk(oh=3.0, od=3.0, oa=3.0, ch=2.0, cd=3.5, ca=4.0)
     with_result = select_bet(m, 100_000)

@@ -14,6 +14,7 @@ import oracledb
 
 from app.data.parsers import MatchOdds, load_odds
 
+
 def _repo_root() -> Path:
     """Repo root on the host; a safe fallback in the container (where these files are
     absent — the brain only calls connect(), not the file-based load/apply_ddl)."""
@@ -56,7 +57,9 @@ def connect() -> oracledb.Connection:
     user = os.environ.get("ORACLE_APP_USER", "boys")
     pw = os.environ["ORACLE_APP_PASSWORD"]
     service = os.environ.get("ORACLE_SERVICE", "FREEPDB1")
-    return oracledb.connect(user=user, password=pw, dsn=f"{host}:{port}/{service}")
+    return oracledb.connect(
+        user=user, password=pw, dsn=f"{host}:{port}/{service}", tcp_connect_timeout=5
+    )
 
 
 def apply_ddl(cur: oracledb.Cursor) -> None:

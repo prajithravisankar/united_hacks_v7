@@ -8,6 +8,7 @@ from __future__ import annotations
 import bisect
 from dataclasses import dataclass
 
+from app.quant.settle import round_half_even_cents
 from app.quant.valuation import Valuation, compute_valuation
 
 AUTO = "AUTO"
@@ -24,6 +25,10 @@ class InvalidRequest(Exception):
 
 class MarketNotFound(Exception):
     pass
+
+
+class EngineUnavailable(Exception):
+    """The fund data store (Oracle) could not be loaded."""
 
 
 @dataclass(frozen=True)
@@ -65,9 +70,9 @@ class QuantEngine:
         current = self._fund_nav_at(as_of)
         if base is None or current is None or base == 0:
             raise CommitmentNotFound(f"no fund data for window {start_date}..{as_of}")
-        nav = round(principal_cents * current / base)
+        nav = round_half_even_cents(principal_cents * current / base)
         if drive_mode == USER:
-            nav += sum(self._user_pnl.get(commitment_id, []))
+            nav = max(0, nav + sum(self._user_pnl.get(commitment_id, [])))  # never below zero
         return nav
 
     # ---- RPCs ----
@@ -96,7 +101,8 @@ class QuantEngine:
         for date, fund_nav in self._curve:
             if date < start_date or date > end_date:  # clip to the window (never pad)
                 continue
-            points.append((date, round(principal_cents * fund_nav / base) + user_delta))
+            base_nav = round_half_even_cents(principal_cents * fund_nav / base)
+            points.append((date, max(0, base_nav + user_delta)))  # never below zero
         return points
 
     def project_outcomes(

@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from app.data.parsers import MatchOdds
 from app.quant.devig import implied_probs
 
-EDGE_THRESHOLD = 0.02  # min closing-line drift to bet
-MAX_STAKE_FRACTION = 0.02  # prudent: never risk more than 2% of the pool on one bet
+EDGE_THRESHOLD = 0.01  # min closing-line drift to bet (the gate)
+MAX_STAKE_FRACTION = 0.02  # cap; between the gate and the cap, bigger drift -> bigger stake
 
 _OUTCOMES = ("H", "D", "A")
 
