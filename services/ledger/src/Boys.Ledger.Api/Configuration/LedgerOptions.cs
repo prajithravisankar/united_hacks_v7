@@ -21,4 +21,8 @@ public sealed class LedgerOptions
     /// fast into a <c>BrainUnavailableException</c> so a hung brain never hangs the demo.</summary>
     [Range(100, 60000, ErrorMessage = "Ledger:BrainTimeoutMs must be between 100 and 60000")]
     public int BrainTimeoutMs { get; init; } = 3000;
+
+    /// <summary>Directory where submitted proof evidence is stored (referenced by URI). v0: a local
+    /// volume path; blank falls back to a temp directory.</summary>
+    public string EvidenceDir { get; init; } = string.Empty;
 }

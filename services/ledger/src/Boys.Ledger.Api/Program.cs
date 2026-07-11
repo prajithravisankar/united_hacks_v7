@@ -5,8 +5,10 @@ using Boys.Ledger.Api.Grpc;
 using Boys.Ledger.Api.Http;
 using Boys.Ledger.Api.Infrastructure;
 using Boys.Ledger.Api.Ledger;
+using Boys.Ledger.Api.Verification;
 using Boys.Ledger.Domain.Abstractions;
 using Boys.Ledger.Domain.Commitments;
+using Boys.Ledger.Domain.Errors;
 using Boys.Ledger.Domain.Ledger;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -37,6 +39,10 @@ builder.Services.AddScoped<IBrainClient, BrainClient>();
 builder.Services.AddSingleton<LedgerService>();
 builder.Services.AddScoped<ILedgerRepository, SqlLedgerRepository>();
 builder.Services.AddScoped<ICommitmentRepository, SqlCommitmentRepository>();
+
+// ---- verification workflow: evidence store (singleton) + orchestrating service (scoped) ----
+builder.Services.AddSingleton<IEvidenceStore, LocalEvidenceStore>();
+builder.Services.AddScoped<VerificationService>();
 
 // ---- health: liveness (process up) vs readiness (SQL Server reachable) ----
 builder.Services.AddHealthChecks()
@@ -93,6 +99,56 @@ app.MapGet("/internal/commitments/{commitmentId:int}/events", async (int commitm
         e.OccurredAt,
     }));
 });
+
+// ---- verification workflow (internal; B16 formalizes these as the public API) ----
+app.MapPost("/internal/commitments/{commitmentId:int}/milestones/{milestoneId:int}/proof",
+    async (int commitmentId, int milestoneId, SubmitProofRequest request, VerificationService svc) =>
+    {
+        byte[] evidence;
+        try
+        {
+            evidence = Convert.FromBase64String(request.EvidenceBase64);
+        }
+        catch (FormatException)
+        {
+            throw new LedgerValidationException("evidenceBase64 is not valid base64");
+        }
+
+        var result = await svc.SubmitProofAsync(
+            commitmentId, milestoneId, request.Claim, evidence, request.Mime, request.IdempotencyKey);
+        return Results.Json(new
+        {
+            commitmentState = result.CommitmentState.ToDb(),
+            milestoneState = result.MilestoneState,
+            ai = new
+            {
+                status = result.AiVerdict.Status.ToString(),
+                degraded = result.AiVerdict.Degraded,
+                confidence = result.AiVerdict.Confidence,
+                reasoning = result.AiVerdict.Reasoning,
+            },
+            resubmissionCount = result.ResubmissionCount,
+        });
+    });
+
+app.MapPost("/internal/milestones/{milestoneId:int}/decision",
+    async (int milestoneId, RefereeDecisionRequest request, VerificationService svc) =>
+    {
+        var decision = request.Decision.ToLowerInvariant() switch
+        {
+            "approve" => RefereeDecision.Approve,
+            "reject" => RefereeDecision.Reject,
+            _ => throw new LedgerValidationException("decision must be 'approve' or 'reject'"),
+        };
+
+        var result = await svc.RefereeDecideAsync(milestoneId, decision, request.RefereeUserId, request.IdempotencyKey);
+        return Results.Json(new
+        {
+            commitmentState = result.CommitmentState.ToDb(),
+            milestoneState = result.MilestoneState,
+            wasApplied = result.WasApplied,
+        });
+    });
 
 // Any unmatched route returns the standard envelope, not a blank 404.
 app.MapFallback(async (HttpContext ctx) =>
