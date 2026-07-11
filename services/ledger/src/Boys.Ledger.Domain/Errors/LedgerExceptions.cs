@@ -46,3 +46,13 @@ public sealed class IdempotencyConflictException : DomainException
     {
     }
 }
+
+/// <summary>A posting would draw the winners bonus pool below zero — the pool cannot cover the draw. The
+/// caller (settlement) recomputes a smaller bonus from the live balance and retries.</summary>
+public sealed class InsufficientPoolException : DomainException
+{
+    public InsufficientPoolException(long balanceCents, long drawCents)
+        : base("insufficient_pool", $"winners pool has {balanceCents} cents; cannot draw {drawCents}")
+    {
+    }
+}

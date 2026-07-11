@@ -32,6 +32,14 @@ public sealed class SqlLedgerRepository : ILedgerRepository
         // the idempotency check and the escrow guard below can't race a concurrent writer.
         await AcquireLockAsync(conn, tx, plan.CommitmentId, cancellationToken);
 
+        // A draw on the shared winners pool must also serialize globally — otherwise two different
+        // commitments (each holding only its own commitment lock) could both pass the pool guard on a stale
+        // read and over-draw it. Consistent lock order (commitment then pool) avoids deadlock.
+        if (DebitsWinnersPool(plan))
+        {
+            await AcquirePoolLockAsync(conn, tx, cancellationToken);
+        }
+
         var existing = await FindByKeyAsync(conn, tx, plan.IdempotencyKey);
         if (existing is not null)
         {
@@ -40,6 +48,7 @@ public sealed class SqlLedgerRepository : ILedgerRepository
         }
 
         await GuardEscrowNotNegativeAsync(conn, tx, plan);
+        await GuardPoolNotNegativeAsync(conn, tx, plan);
 
         var txnId = Guid.NewGuid();
         try
@@ -111,6 +120,48 @@ public sealed class SqlLedgerRepository : ILedgerRepository
         {
             // Couldn't serialize in time — surface as a transient conflict rather than corrupting balances.
             throw new IdempotencyConflictException(resource);
+        }
+    }
+
+    private static bool DebitsWinnersPool(PostingPlan plan) =>
+        plan.Postings.Where(p => p.Account == LedgerAccount.WinnersBonusPool).Sum(p => p.DeltaCents) < 0;
+
+    /// <summary>Global exclusive lock for winners-pool draws, so all draws serialize regardless of commitment.</summary>
+    private static async Task AcquirePoolLockAsync(SqlConnection conn, SqlTransaction tx, CancellationToken cancellationToken)
+    {
+        var result = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
+            "DECLARE @r INT; "
+            + "EXEC @r = sp_getapplock @Resource = 'ledger:winners-pool', @LockMode = 'Exclusive', "
+            + "@LockOwner = 'Transaction', @LockTimeout = 5000; "
+            + "SELECT @r;",
+            transaction: tx, cancellationToken: cancellationToken));
+
+        if (result < 0)
+        {
+            throw new IdempotencyConflictException("ledger:winners-pool");
+        }
+    }
+
+    /// <summary>The winners bonus pool may never go negative. Only draws (net debit) are checked, under the
+    /// global pool lock, so a bonus can never over-draw the shared pool even under concurrent settlements.</summary>
+    private static async Task GuardPoolNotNegativeAsync(SqlConnection conn, SqlTransaction tx, PostingPlan plan)
+    {
+        var delta = plan.Postings
+            .Where(p => p.Account == LedgerAccount.WinnersBonusPool)
+            .Sum(p => p.DeltaCents);
+
+        if (delta >= 0)
+        {
+            return;  // credits (forfeits) can't over-draw
+        }
+
+        var current = await conn.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT ISNULL(SUM(delta_cents), 0) FROM ledger_postings WHERE account = 'WINNERS_BONUS_POOL'",
+            transaction: tx));
+
+        if (current + delta < 0)
+        {
+            throw new InsufficientPoolException(current, -delta);
         }
     }
 

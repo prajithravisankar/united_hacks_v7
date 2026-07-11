@@ -5,6 +5,7 @@ using Boys.Ledger.Api.Grpc;
 using Boys.Ledger.Api.Http;
 using Boys.Ledger.Api.Infrastructure;
 using Boys.Ledger.Api.Ledger;
+using Boys.Ledger.Api.Settlement;
 using Boys.Ledger.Api.Verification;
 using Boys.Ledger.Domain.Abstractions;
 using Boys.Ledger.Domain.Commitments;
@@ -43,6 +44,9 @@ builder.Services.AddScoped<ICommitmentRepository, SqlCommitmentRepository>();
 // ---- verification workflow: evidence store (singleton) + orchestrating service (scoped) ----
 builder.Services.AddSingleton<IEvidenceStore, LocalEvidenceStore>();
 builder.Services.AddScoped<VerificationService>();
+
+// ---- settlement engine (scoped) ----
+builder.Services.AddScoped<SettlementService>();
 
 // ---- health: liveness (process up) vs readiness (SQL Server reachable) ----
 builder.Services.AddHealthChecks()
@@ -149,6 +153,31 @@ app.MapPost("/internal/milestones/{milestoneId:int}/decision",
             wasApplied = result.WasApplied,
         });
     });
+
+// ---- settlement (internal; B16 formalizes) ----
+static object ReceiptJson(Boys.Ledger.Domain.Settlement.SettlementReceipt r) => new
+{
+    type = r.Type.ToString(),
+    principalCents = r.PrincipalCents,
+    navCents = r.NavCents,
+    gainCents = r.GainCents,
+    carryCents = r.CarryCents,
+    charityCents = r.CharityCents,
+    bonusCents = r.BonusCents,
+    takeHomeCents = r.TakeHomeCents,
+};
+
+app.MapPost("/internal/commitments/{commitmentId:int}/settle",
+    async (int commitmentId, SettlementService svc) => Results.Json(ReceiptJson(await svc.SettleAsync(commitmentId))));
+
+app.MapGet("/internal/commitments/{commitmentId:int}/receipt", async (int commitmentId, SettlementService svc) =>
+{
+    var receipt = await svc.GetReceiptAsync(commitmentId);
+    return receipt is null
+        ? Results.Json(new ErrorEnvelope(new ErrorBody("not_found", "no settlement for this commitment", null)),
+            statusCode: StatusCodes.Status404NotFound)
+        : Results.Json(ReceiptJson(receipt));
+});
 
 // Any unmatched route returns the standard envelope, not a blank 404.
 app.MapFallback(async (HttpContext ctx) =>

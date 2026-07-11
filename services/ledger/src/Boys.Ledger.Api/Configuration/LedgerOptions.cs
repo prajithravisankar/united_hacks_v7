@@ -25,4 +25,10 @@ public sealed class LedgerOptions
     /// <summary>Directory where submitted proof evidence is stored (referenced by URI). v0: a local
     /// volume path; blank falls back to a temp directory.</summary>
     public string EvidenceDir { get; init; } = string.Empty;
+
+    /// <summary>Demo fund window: a "now" commitment's stake is valued against this historical slice of the
+    /// backtested NAV curve (the "simulate the past as if live" mechanic). Defaults to the full curve range.</summary>
+    public string FundStartDate { get; init; } = "2021-08-13";
+
+    public string FundAsOfDate { get; init; } = "2024-05-19";
 }
