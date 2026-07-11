@@ -1,0 +1,53 @@
+name: boys
+
+# BOYS backing databases — polyglot persistence.
+#   mssql  = ledger's OLTP store (escrow, ledger, state machine)  — ARM-native azure-sql-edge
+#   oracle = brain's OLAP warehouse (odds, results, model probs)  — ARM-native gvenzl/oracle-free
+# Non-default host ports so local DBs never collide.
+
+services:
+  mssql:
+    # Real SQL Server 2022 under amd64 emulation. azure-sql-edge (ARM-native) is
+    # deprecated and core-dumps on current Docker Desktop VMs, so we emulate instead —
+    # the reliable way to run SQL Server on Apple Silicon.
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: boys-mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}"
+    ports:
+      - "14333:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    healthcheck:
+      # Probe the TDS port with bash /dev/tcp (image-agnostic; the real query check is scripts/check_dbs.sh).
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    container_name: boys-oracle
+    environment:
+      ORACLE_PASSWORD: "${ORACLE_PASSWORD:?set ORACLE_PASSWORD in .env}"
+      APP_USER: "${ORACLE_APP_USER:-boys}"
+      APP_USER_PASSWORD: "${ORACLE_APP_PASSWORD:?set ORACLE_APP_PASSWORD in .env}"
+    ports:
+      - "15211:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      # gvenzl runs *.sql/*.sh here once, on first initialization of an empty database.
+      - ./docker/oracle/init:/container-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+volumes:
+  mssql_data:
+  oracle_data:

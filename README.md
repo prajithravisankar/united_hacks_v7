@@ -30,8 +30,16 @@ Prereqs: Docker Desktop (≥ 8GB RAM), .NET 9 SDK, Go 1.25+, `uv` (Python), `pro
 ./scripts/verify.sh
 
 # bring up the databases (Epic E0/B02)
-docker compose up -d
+cp .env.example .env          # fill in / keep dev defaults
+docker compose up -d          # first run pulls ~3GB of images
+./scripts/check_dbs.sh        # proves both accept a real query
 ```
+
+### Databases (Apple Silicon notes)
+- **SQL Server** = `mcr.microsoft.com/azure-sql-edge` (ARM-native). The normal `mssql/server` image is amd64-only and slow under emulation. sql-edge ships **no `sqlcmd`**, so the healthcheck probes the TDS port and `check_dbs.sh` uses a pure-Python client.
+- **Oracle** = `gvenzl/oracle-free:23-slim` (ARM-native). First boot initializes the database and takes **~1–2 minutes** (healthcheck `start_period` accounts for it); later boots are fast.
+- Give **Docker Desktop ≥ 8GB RAM** — two databases plus (later) three service runtimes.
+- Host ports are non-default: SQL Server `14333`, Oracle `15211` (so local DBs don't collide).
 
 Per-service test commands:
 
