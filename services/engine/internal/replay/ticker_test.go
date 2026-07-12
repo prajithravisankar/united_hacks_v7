@@ -58,6 +58,22 @@ func drive(t *testing.T, tk *Ticker, fc *clock.FakeClock, n int, delay time.Dura
 	return out
 }
 
+func TestLoadRecoversFromAnEmptyTimeline(t *testing.T) {
+	// Booted with no curve (brain was down at boot) → idle, emits nothing even if Started.
+	tk, fc := newRunning(t, nil)
+	tk.Start(30)
+	if st := tk.State(); st.Position != 0 {
+		t.Fatalf("empty ticker should sit at position 0, got %+v", st)
+	}
+	// Self-heal: the background re-fetch loads the freshly-fetched curve.
+	tk.Load(makeTimeline(5))
+	tk.Start(30)
+	ticks := drive(t, tk, fc, 5, stepAt1x/30)
+	if len(ticks) != 5 || ticks[0].NavCents != 10000 || !ticks[4].Terminal {
+		t.Fatalf("Load did not recover the stream: %+v", ticks)
+	}
+}
+
 func TestSameTimelineAndSpeedEmitIdenticalSequence(t *testing.T) {
 	run := func() []Tick {
 		tk, fc := newRunning(t, makeTimeline(10))

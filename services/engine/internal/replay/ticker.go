@@ -44,14 +44,16 @@ const (
 	cmdSetSpeed
 	cmdSeek
 	cmdQuery
+	cmdLoad
 )
 
 type command struct {
-	kind  cmdKind
-	speed float64
-	pos   int
-	reply chan State
-	ack   chan struct{} // closed after the driver has applied the command (and stopped any live timer)
+	kind     cmdKind
+	speed    float64
+	pos      int
+	timeline []Point
+	reply    chan State
+	ack      chan struct{} // closed after the driver has applied the command (and stopped any live timer)
 }
 
 // Ticker replays a timeline. Construct with New, run the driver with Run, control it with the public
@@ -88,6 +90,10 @@ func New(timeline []Point, clk clock.Clock, stepAt1x time.Duration) *Ticker {
 // Ticks is the emission stream. Closed when the driver exits (context cancelled). A single consumer (the
 // hub, or a test) reads it; the driver blocks on emit until it's read, keeping the sequence exact.
 func (t *Ticker) Ticks() <-chan Tick { return t.out }
+
+// Load replaces the timeline (paused at position 0) — the self-heal path when the engine booted before the
+// curve was available (brain down at boot) and later fetches it. Safe to call any time; applied in the driver.
+func (t *Ticker) Load(timeline []Point) { t.send(command{kind: cmdLoad, timeline: timeline}) }
 
 // Run drives the ticker until ctx is cancelled. Blocks; call in its own goroutine.
 func (t *Ticker) Run(ctx context.Context) {
@@ -185,6 +191,11 @@ func (t *Ticker) apply(c command) {
 			t.position = c.pos
 			t.finished = false
 		}
+	case cmdLoad:
+		t.timeline = c.timeline // self-heal: adopt the freshly-fetched curve, paused at the start
+		t.position = 0
+		t.finished = false
+		t.running = false
 	case cmdQuery:
 		c.reply <- t.snapshot()
 	}

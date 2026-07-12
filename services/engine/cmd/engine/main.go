@@ -93,6 +93,13 @@ func run() error {
 	ticker := replay.New(timeline, clock.RealClock{}, replayStepAt1x)
 	go ticker.Run(ctx)
 
+	// Self-heal: if the boot fetch failed (brain was down at startup → empty timeline), keep retrying in the
+	// background and load the curve into the ticker once brain returns. Without this the engine would serve a
+	// permanently-empty stream (and later mislead clients with a "healthy" status) until a manual restart.
+	if !ready.Load() {
+		go retryCurveFetch(ctx, brain, ticker, &ready, cfg.DemoCommitmentID, cfg.BrainTimeout, logger)
+	}
+
 	// The WebSocket hub is the single consumer of the tick stream; it fans out to every connected browser.
 	liveHub := hub.NewHub(ticker, cfg.DemoCommitmentID, wsSendBuffer, bootStatus)
 	go liveHub.Run(ctx)
@@ -150,4 +157,34 @@ func run() error {
 	grpcSrv.GracefulStop()
 	logger.Info("engine stopped")
 	return nil
+}
+
+// retryCurveFetch keeps trying to fetch the demo curve until brain returns it, then loads it into the ticker
+// and marks the engine ready — the self-heal for an engine that booted while brain was down. Exits on the
+// first success or on ctx cancel.
+func retryCurveFetch(ctx context.Context, brain *brainclient.Client, ticker *replay.Ticker, ready *atomic.Bool,
+	commitmentID string, timeout time.Duration, logger *slog.Logger) {
+	t := time.NewTicker(2 * time.Second)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			fetchCtx, cancel := context.WithTimeout(ctx, timeout)
+			points, err := brain.FetchNavCurve(fetchCtx, commitmentID, demoPrincipalCents, fundStartDate, fundEndDate)
+			cancel()
+			if err != nil || len(points) == 0 {
+				continue
+			}
+			timeline := make([]replay.Point, len(points))
+			for i, p := range points {
+				timeline[i] = replay.Point{Date: p.Date, NavCents: p.NavCents, Events: p.Events}
+			}
+			ticker.Load(timeline)
+			ready.Store(true)
+			logger.Info("fetched demo curve after startup retry; engine now serving", "points", len(timeline))
+			return
+		}
+	}
 }
