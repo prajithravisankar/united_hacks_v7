@@ -185,7 +185,10 @@ func (h *Hub) SetRunning(running bool) {
 // inbound frames are discarded and protocol errors close the connection cleanly.
 func (h *Hub) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		conn, err := websocket.Accept(w, r, nil)
+		// Allow any Origin: the engine sits behind nginx (and, in the deploy, a tunnel), so the browser's
+		// Origin never matches the proxied Host and coder/websocket's default same-origin check would 403
+		// every real browser. The stream is read-only (inbound frames are discarded), so this is safe.
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{"*"}})
 		if err != nil {
 			return
 		}
