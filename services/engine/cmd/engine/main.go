@@ -117,6 +117,7 @@ func run() error {
 
 	mux := httpapi.Router(ready.Load)
 	mux.HandleFunc("/ws/live", liveHub.Handler())
+	httpapi.RegisterReplayControl(mux, ticker, liveHub) // browser-drivable play/pause/speed for the board
 	if cfg.EnablePprof {
 		// Opt-in profiling (off by default; loopback-only in compose). Used by the R5 soak to sample the
 		// engine's goroutine count and heap. pprof.Index serves /debug/pprof/{goroutine,heap,...}.
