@@ -136,6 +136,11 @@ services:
       Ledger__SqlConnectionString: "Server=mssql,1433;Database=boys;User Id=sa;Password=${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env};TrustServerCertificate=True;Encrypt=False;Connect Timeout=10"
       Ledger__BrainGrpcAddress: "http://brain:50061"
       Ledger__BrainTimeoutMs: "3000"
+      # Demo log hygiene: silence per-request/routing chatter so `docker logs boys-ledger` shows only the
+      # meaningful events (goal created, referee decision, degraded) on camera.
+      Logging__LogLevel__Default: "Information"
+      Logging__LogLevel__Microsoft.AspNetCore: "Warning"
+      Logging__LogLevel__System.Net.Http.HttpClient: "Warning"
     ports:
       - "127.0.0.1:8080:8080"     # ledger http (health now; REST in B16)
     healthcheck:
