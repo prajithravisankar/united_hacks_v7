@@ -89,3 +89,25 @@ func TestStartPauseAndStateRoundTrip(t *testing.T) {
 		t.Fatalf("state still running: %+v", state)
 	}
 }
+
+func TestSetSpeedChangesSpeedAndReportsRunning(t *testing.T) {
+	svc, sink := newService(t)
+
+	if _, err := svc.StartReplay(context.Background(), &enginev1.StartReplayRequest{CommitmentId: "1", Speed: 4}); err != nil {
+		t.Fatalf("StartReplay: %v", err)
+	}
+	changed, err := svc.SetSpeed(context.Background(), &enginev1.SetSpeedRequest{CommitmentId: "1", Speed: 12})
+	if err != nil {
+		t.Fatalf("SetSpeed: %v", err)
+	}
+	if changed.GetSpeed() != 12 {
+		t.Fatalf("speed = %v, want 12", changed.GetSpeed())
+	}
+	// SetSpeed leaves the replay playing, so it must push running=true to the sink (keeps the hub consistent).
+	if !changed.GetRunning() {
+		t.Fatalf("expected still running after SetSpeed: %+v", changed)
+	}
+	if r, ok := sink.last(); !ok || !r {
+		t.Fatalf("SetSpeed should push running=true to the sink, got %v (set=%v)", r, ok)
+	}
+}

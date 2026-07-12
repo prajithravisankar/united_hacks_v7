@@ -262,6 +262,43 @@ func TestInboundFramesAreIgnoredSafely(t *testing.T) {
 	}
 }
 
+func TestSnapshotCarriesCurrentStatus(t *testing.T) {
+	// A client connecting during a sustained outage learns "degraded" from the snapshot itself — no separate
+	// status message follows unless the health CHANGES (the contract in docs/ws-contract.md).
+	ticker := replay.New(makeTimeline(10), clock.RealClock{}, time.Millisecond)
+	ctx, cancel := context.WithCancel(context.Background())
+	go ticker.Run(ctx)
+	h := NewHub(ticker, "1", 32, "degraded") // booted degraded (brain down at boot)
+	go h.Run(ctx)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws/live", h.Handler())
+	srv := httptest.NewServer(mux)
+	t.Cleanup(func() { cancel(); srv.Close() })
+
+	if snap := mustSnapshot(t, dial(t, srv.URL, "1")); snap.Status != "degraded" {
+		t.Fatalf("snapshot.status = %q, want degraded", snap.Status)
+	}
+	// After a recovery broadcast, a freshly-connecting client's snapshot reflects the new status.
+	h.BroadcastStatus("healthy")
+	if snap := mustSnapshot(t, dial(t, srv.URL, "1")); snap.Status != "healthy" {
+		t.Fatalf("snapshot.status = %q, want healthy", snap.Status)
+	}
+}
+
+func TestNewHubDefaults(t *testing.T) {
+	h := NewHub(nil, "1", 0, "") // sendBuffer floored to 1; empty status -> healthy
+	if h.sendBuffer != 1 {
+		t.Fatalf("sendBuffer = %d, want 1 (floor)", h.sendBuffer)
+	}
+	if h.status != "healthy" {
+		t.Fatalf("status = %q, want healthy (default)", h.status)
+	}
+	h2 := NewHub(nil, "1", 64, "degraded")
+	if h2.sendBuffer != 64 || h2.status != "degraded" {
+		t.Fatalf("explicit values not preserved: buffer=%d status=%q", h2.sendBuffer, h2.status)
+	}
+}
+
 func TestPausedReplayReportsNotRunning(t *testing.T) {
 	// A pause emits no tick, so the hub can only learn "not playing" via SetRunning (what the gRPC control
 	// layer calls). Both the snapshot a late joiner gets and any status broadcast must then report running=false.

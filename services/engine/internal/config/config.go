@@ -17,6 +17,7 @@ type Config struct {
 	BrainGRPCAddress string        // brain's quant gRPC endpoint, e.g. "brain:50061"
 	BrainTimeout     time.Duration // per-call deadline for brain RPCs
 	DemoCommitmentID string        // the commitment whose curve is fetched at startup
+	EnablePprof      bool          // serve net/http/pprof on the HTTP listener (off by default; loopback-only in compose)
 	LogLevel         slog.Level
 }
 
@@ -42,6 +43,7 @@ func Load() (Config, error) {
 		BrainGRPCAddress: brain,
 		BrainTimeout:     time.Duration(timeoutMs) * time.Millisecond,
 		DemoCommitmentID: env("DEMO_COMMITMENT_ID", "1"),
+		EnablePprof:      env("ENGINE_ENABLE_PPROF", "0") == "1",
 		LogLevel:         level(env("LOG_LEVEL", "info")),
 	}, nil
 }

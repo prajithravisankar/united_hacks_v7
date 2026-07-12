@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"sync/atomic"
@@ -109,6 +110,13 @@ func run() error {
 
 	mux := httpapi.Router(ready.Load)
 	mux.HandleFunc("/ws/live", liveHub.Handler())
+	if cfg.EnablePprof {
+		// Opt-in profiling (off by default; loopback-only in compose). Used by the R5 soak to sample the
+		// engine's goroutine count and heap. pprof.Index serves /debug/pprof/{goroutine,heap,...}.
+		mux.HandleFunc("/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		logger.Info("pprof enabled on the HTTP listener at /debug/pprof/")
+	}
 	httpSrv := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
 	grpcSrv := grpc.NewServer()
 	enginev1.RegisterEngineServiceServer(grpcSrv, enginesvc.New(ticker, liveHub, cfg.DemoCommitmentID))

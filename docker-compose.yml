@@ -127,6 +127,7 @@ services:
       ENGINE_GRPC_ADDR: ":50071"
       DEMO_COMMITMENT_ID: "1"
       LOG_LEVEL: info
+      ENGINE_ENABLE_PPROF: "${ENGINE_ENABLE_PPROF:-0}"   # opt-in profiling (loopback-only); on for the R5 soak
     ports:
       - "127.0.0.1:8090:8090"     # health + WebSocket live stream (B19)
       - "127.0.0.1:50071:50071"   # EngineService gRPC

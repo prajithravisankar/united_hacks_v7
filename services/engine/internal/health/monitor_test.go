@@ -223,3 +223,14 @@ func TestProbeTimeoutIsPassedToTheProber(t *testing.T) {
 type proberFunc func(context.Context) error
 
 func (f proberFunc) Probe(ctx context.Context) error { return f(ctx) }
+
+func TestConfigWithDefaults(t *testing.T) {
+	d := Config{}.withDefaults() // zero config gets safe, non-zero defaults
+	if d.Interval <= 0 || d.ProbeTimeout <= 0 || d.FailThreshold < 1 || d.RecoverThreshold < 1 {
+		t.Fatalf("withDefaults left an invalid value: %+v", d)
+	}
+	c := Config{Interval: 5, ProbeTimeout: 6, FailThreshold: 3, RecoverThreshold: 4}.withDefaults()
+	if c.Interval != 5 || c.ProbeTimeout != 6 || c.FailThreshold != 3 || c.RecoverThreshold != 4 {
+		t.Fatalf("withDefaults clobbered explicit values: %+v", c)
+	}
+}

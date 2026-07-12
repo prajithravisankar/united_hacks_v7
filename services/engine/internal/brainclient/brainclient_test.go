@@ -25,6 +25,11 @@ func (f *fakeQuant) GetNavCurve(_ context.Context, _ *brainv1.GetNavCurveRequest
 	return f.curve, nil
 }
 
+// ListOpenMarkets backs the health Probe; the stub just needs to answer (brain-up) without an error.
+func (f *fakeQuant) ListOpenMarkets(_ context.Context, _ *brainv1.ListOpenMarketsRequest) (*brainv1.OpenMarkets, error) {
+	return &brainv1.OpenMarkets{}, nil
+}
+
 // startFakeBrain runs a stub QuantService on a loopback port and returns its address; the server is
 // stopped (and its goroutines drained) on test cleanup so goleak stays clean.
 func startFakeBrain(t *testing.T, curve *brainv1.NavCurve) string {
@@ -82,5 +87,34 @@ func TestFetchNavCurveUnavailableIsAnError(t *testing.T) {
 	defer cancel()
 	if _, err := client.FetchNavCurve(ctx, "1", 10000, "a", "b"); err == nil {
 		t.Fatal("expected an error when brain is unavailable")
+	}
+}
+
+func TestProbeSucceedsWhenBrainIsReachable(t *testing.T) {
+	addr := startFakeBrain(t, &brainv1.NavCurve{})
+	client, err := Dial(addr)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := client.Probe(ctx); err != nil {
+		t.Fatalf("Probe against a reachable brain: %v", err)
+	}
+}
+
+func TestProbeFailsWhenBrainIsUnavailable(t *testing.T) {
+	client, err := Dial("127.0.0.1:1") // nothing listening
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := client.Probe(ctx); err == nil {
+		t.Fatal("expected Probe to fail when brain is unreachable")
 	}
 }

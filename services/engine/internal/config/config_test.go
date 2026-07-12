@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"testing"
 	"time"
 
@@ -51,5 +52,36 @@ func TestLoadRejectsNonNumericTimeout(t *testing.T) {
 
 	if _, err := Load(); err == nil {
 		t.Fatal("expected an error for a non-numeric timeout")
+	}
+}
+
+func TestLoadParsesLogLevelsAndPprof(t *testing.T) {
+	t.Setenv("BRAIN_GRPC_ADDRESS", "brain:50061")
+	for _, tc := range []struct {
+		in   string
+		want slog.Level
+	}{
+		{"debug", slog.LevelDebug},
+		{"warn", slog.LevelWarn},
+		{"error", slog.LevelError},
+		{"nonsense", slog.LevelInfo}, // unknown -> info
+	} {
+		t.Setenv("LOG_LEVEL", tc.in)
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("Load(%q): %v", tc.in, err)
+		}
+		if cfg.LogLevel != tc.want {
+			t.Fatalf("LOG_LEVEL=%q -> %v, want %v", tc.in, cfg.LogLevel, tc.want)
+		}
+	}
+
+	t.Setenv("LOG_LEVEL", "info")
+	if cfg, _ := Load(); cfg.EnablePprof {
+		t.Fatal("pprof should default off")
+	}
+	t.Setenv("ENGINE_ENABLE_PPROF", "1")
+	if cfg, _ := Load(); !cfg.EnablePprof {
+		t.Fatal("ENGINE_ENABLE_PPROF=1 should enable pprof")
 	}
 }

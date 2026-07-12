@@ -94,10 +94,6 @@ func New(prober Prober, broadcaster Broadcaster, clk clock.Clock, cfg Config, lo
 	}
 }
 
-// Status returns the current status. Safe to call ONLY from the Run goroutine (e.g. in tests that drive the
-// clock and read between steps); production code learns of changes through the broadcaster, not this.
-func (m *Monitor) Status() string { return m.status }
-
 // Run polls brain on the configured interval until the context is cancelled. It is the single owner of the
 // monitor's state; exactly one Run per Monitor.
 func (m *Monitor) Run(ctx context.Context) {
