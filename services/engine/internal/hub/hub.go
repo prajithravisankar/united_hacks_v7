@@ -48,18 +48,25 @@ type Hub struct {
 	register   chan *client
 	unregister chan *client
 	statusCh   chan string
+	runningCh  chan bool
 	done       chan struct{}
 
 	// Broadcast-goroutine-owned state (touched ONLY inside Run — never locked, never shared).
 	lastTick      replay.Tick
 	lastTickValid bool
+	running       bool // is the replay actively playing (false while paused, before start, or after terminal)
 	status        string
 }
 
 // NewHub builds a hub. sendBuffer is the per-client queue depth before a slow client is dropped.
-func NewHub(ticker *replay.Ticker, commitmentID string, sendBuffer int) *Hub {
+// initialStatus is the status reported until the health monitor says otherwise (degraded if brain was down at
+// boot, healthy otherwise); an empty string defaults to healthy.
+func NewHub(ticker *replay.Ticker, commitmentID string, sendBuffer int, initialStatus string) *Hub {
 	if sendBuffer < 1 {
 		sendBuffer = 1
+	}
+	if initialStatus == "" {
+		initialStatus = "healthy"
 	}
 	return &Hub{
 		ticker:       ticker,
@@ -68,8 +75,9 @@ func NewHub(ticker *replay.Ticker, commitmentID string, sendBuffer int) *Hub {
 		register:     make(chan *client),
 		unregister:   make(chan *client),
 		statusCh:     make(chan string),
+		runningCh:    make(chan bool),
 		done:         make(chan struct{}),
-		status:       "healthy",
+		status:       initialStatus,
 	}
 }
 
@@ -102,10 +110,13 @@ func (h *Hub) Run(ctx context.Context) {
 			}
 			h.lastTick = tick
 			h.lastTickValid = true
+			h.running = !tick.Terminal // a tick is emitted only while playing; the terminal tick ends the run
 			h.broadcast(clients, tickMessage(tick))
+		case running := <-h.runningCh:
+			h.running = running // pause/resume arrives here — the ticker emits no tick on pause
 		case status := <-h.statusCh:
 			h.status = status
-			h.broadcast(clients, Message{Type: "status", Status: status, Running: h.lastTickValid && !h.lastTick.Terminal})
+			h.broadcast(clients, Message{Type: "status", Status: status, Running: h.running})
 		}
 	}
 }
@@ -128,14 +139,14 @@ func (h *Hub) deliver(clients map[*client]struct{}, c *client, msg Message) {
 
 func (h *Hub) snapshotMessage() Message {
 	if !h.lastTickValid {
-		return Message{Type: "snapshot", Position: 0, NavCents: 0, Running: false, Status: h.status}
+		return Message{Type: "snapshot", Position: 0, NavCents: 0, Running: h.running, Status: h.status}
 	}
 	return Message{
 		Type:     "snapshot",
 		Position: h.lastTick.Position,
 		Date:     h.lastTick.Date,
 		NavCents: h.lastTick.NavCents,
-		Running:  !h.lastTick.Terminal,
+		Running:  h.running,
 		Status:   h.status,
 	}
 }
@@ -156,6 +167,16 @@ func tickMessage(t replay.Tick) Message {
 func (h *Hub) BroadcastStatus(status string) {
 	select {
 	case h.statusCh <- status:
+	case <-h.done:
+	}
+}
+
+// SetRunning updates whether the replay is playing, so snapshots and status messages report it correctly
+// even while paused (a pause emits no tick, so the hub can't infer it from the stream). Called by the gRPC
+// control layer after a start/pause/resume. Never blocks past hub shutdown.
+func (h *Hub) SetRunning(running bool) {
+	select {
+	case h.runningCh <- running:
 	case <-h.done:
 	}
 }

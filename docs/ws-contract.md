@@ -26,7 +26,7 @@ Every message is JSON with a `type`. **NAV is always integer cents** (never a fl
 ```
 
 ## The three message types
-- **`snapshot`** — sent once, immediately on connect. Carries the current `position`, `navCents`, `date`, and `running` so a **late joiner is caught up** to exactly where the replay is. After the snapshot you receive **only subsequent** ticks — nothing you'd already have seen, nothing missed.
+- **`snapshot`** — sent once, immediately on connect. Carries the current `position`, `navCents`, `date`, and `running` so a **late joiner is caught up** to exactly where the replay is. `running` is the true play/pause state: it is `false` before the replay starts, while it is **paused**, and after it completes. After the snapshot you receive **only subsequent** ticks — nothing you'd already have seen, nothing missed.
 - **`tick`** — one per replay step: the NAV moved to `navCents` on `date`, with any `events`. The final tick of a run carries `terminal: true`.
 - **`status`** — a health change broadcast to everyone: `"degraded"` when the engine loses brain and serves the cached curve, `"healthy"` on recovery (B20). The tick stream is **uninterrupted** across a status change.
 

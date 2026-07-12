@@ -37,6 +37,16 @@ func Dial(address string) (*Client, error) {
 // Close releases the underlying connection and its goroutines.
 func (c *Client) Close() error { return c.conn.Close() }
 
+// Probe reports whether brain is reachable, for the degradation monitor. It issues ListOpenMarkets — brain's
+// cheapest RPC (in-memory, no Oracle, no business args) — so it succeeds whenever brain is up and fails only
+// on a transport error when brain is down. It never mutates anything. A nil error means healthy.
+func (c *Client) Probe(ctx context.Context) error {
+	if _, err := c.quant.ListOpenMarkets(ctx, &brainv1.ListOpenMarketsRequest{}); err != nil {
+		return fmt.Errorf("probe brain: %w", err)
+	}
+	return nil
+}
+
 // FetchNavCurve returns the commitment's NAV curve. The returned error is non-nil (and the slice nil) when
 // brain is unavailable — callers degrade rather than crash.
 func (c *Client) FetchNavCurve(ctx context.Context, commitmentID string, principalCents int64, start, end string) ([]NavPoint, error) {

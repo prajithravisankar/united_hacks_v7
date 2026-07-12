@@ -45,7 +45,7 @@ func serve(t *testing.T, ticker *replay.Ticker, buffer int) string {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	go ticker.Run(ctx)
-	h := NewHub(ticker, "1", buffer)
+	h := NewHub(ticker, "1", buffer, "healthy")
 	go h.Run(ctx)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/live", h.Handler())
@@ -259,6 +259,43 @@ func TestInboundFramesAreIgnoredSafely(t *testing.T) {
 	}
 	if m := read(t, listener); m.Type != "tick" {
 		t.Fatalf("listener got %q, want tick", m.Type)
+	}
+}
+
+func TestPausedReplayReportsNotRunning(t *testing.T) {
+	// A pause emits no tick, so the hub can only learn "not playing" via SetRunning (what the gRPC control
+	// layer calls). Both the snapshot a late joiner gets and any status broadcast must then report running=false.
+	ticker := replay.New(makeTimeline(200), clock.RealClock{}, time.Millisecond)
+	ctx, cancel := context.WithCancel(context.Background())
+	go ticker.Run(ctx)
+	h := NewHub(ticker, "1", 32, "healthy")
+	go h.Run(ctx)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws/live", h.Handler())
+	srv := httptest.NewServer(mux)
+	t.Cleanup(func() { cancel(); srv.Close() })
+
+	c1 := dial(t, srv.URL, "1")
+	mustSnapshot(t, c1)
+	ticker.Start(1)
+	if m := read(t, c1); m.Type != "tick" || !m.Running {
+		t.Fatalf("a playing tick should report running=true, got %+v", m)
+	}
+
+	// Pause (synchronous — no more ticks) then tell the hub, exactly as enginesvc.Pause does.
+	ticker.Pause()
+	h.SetRunning(false)
+
+	// A late joiner during the pause must be told the replay is NOT playing.
+	c2 := dial(t, srv.URL, "1")
+	if snap := mustSnapshot(t, c2); snap.Running {
+		t.Fatalf("snapshot during pause reported running=true: %+v", snap)
+	}
+
+	// A status broadcast during the pause must also carry running=false.
+	h.BroadcastStatus("degraded")
+	if m := read(t, c2); m.Type != "status" || m.Running {
+		t.Fatalf("status during pause = %+v, want a status with running=false", m)
 	}
 }
 

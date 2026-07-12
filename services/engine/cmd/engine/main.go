@@ -19,6 +19,7 @@ import (
 	"boys/engine/internal/clock"
 	"boys/engine/internal/config"
 	"boys/engine/internal/enginesvc"
+	"boys/engine/internal/health"
 	"boys/engine/internal/httpapi"
 	"boys/engine/internal/hub"
 	"boys/engine/internal/replay"
@@ -33,6 +34,13 @@ const (
 	fundEndDate        = "2024-05-19"
 	replayStepAt1x     = time.Second // one timeline point per second at 1x (≈33ms/point at 30x)
 	wsSendBuffer       = 64          // per-client queue depth before a slow browser is dropped
+
+	// Degradation monitor: probe brain every 2s; flip to degraded after 2 straight misses, back to healthy
+	// after 2 straight hits. The hysteresis keeps a one-off blip from flapping the on-screen status.
+	healthProbeInterval = 2 * time.Second
+	healthProbeTimeout  = 2 * time.Second
+	healthFailThreshold = 2
+	healthRecoverThresh = 2
 )
 
 func main() {
@@ -58,13 +66,15 @@ func run() error {
 	}
 	defer brain.Close()
 
-	// Startup curve fetch — the demo timeline. A brain outage here is non-fatal (the engine runs degraded;
-	// B20 makes the cache authoritative and adds recovery).
+	// Startup curve fetch — the demo timeline. A brain outage here is non-fatal: the cached curve is
+	// authoritative, so the engine runs degraded until the monitor sees brain recover.
 	var ready atomic.Bool
+	bootStatus := health.StatusHealthy
 	fetchCtx, cancelFetch := context.WithTimeout(context.Background(), cfg.BrainTimeout)
 	points, err := brain.FetchNavCurve(fetchCtx, cfg.DemoCommitmentID, demoPrincipalCents, fundStartDate, fundEndDate)
 	cancelFetch()
 	if err != nil {
+		bootStatus = health.StatusDegraded // brain down at boot: report degraded from the first frame, not healthy
 		logger.Warn("could not fetch demo curve at startup; continuing degraded", "err", err)
 	} else {
 		ready.Store(true)
@@ -83,14 +93,25 @@ func run() error {
 	go ticker.Run(ctx)
 
 	// The WebSocket hub is the single consumer of the tick stream; it fans out to every connected browser.
-	liveHub := hub.NewHub(ticker, cfg.DemoCommitmentID, wsSendBuffer)
+	liveHub := hub.NewHub(ticker, cfg.DemoCommitmentID, wsSendBuffer, bootStatus)
 	go liveHub.Run(ctx)
+
+	// The degradation monitor probes brain and broadcasts a status change through the hub when brain drops
+	// (degraded) or comes back (healthy). The replay keeps running off the cached curve either way.
+	monitor := health.New(brain, liveHub, clock.RealClock{}, health.Config{
+		Interval:         healthProbeInterval,
+		ProbeTimeout:     healthProbeTimeout,
+		FailThreshold:    healthFailThreshold,
+		RecoverThreshold: healthRecoverThresh,
+		InitialStatus:    bootStatus,
+	}, logger)
+	go monitor.Run(ctx)
 
 	mux := httpapi.Router(ready.Load)
 	mux.HandleFunc("/ws/live", liveHub.Handler())
 	httpSrv := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
 	grpcSrv := grpc.NewServer()
-	enginev1.RegisterEngineServiceServer(grpcSrv, enginesvc.New(ticker, cfg.DemoCommitmentID))
+	enginev1.RegisterEngineServiceServer(grpcSrv, enginesvc.New(ticker, liveHub, cfg.DemoCommitmentID))
 	grpcLis, err := net.Listen("tcp", cfg.GRPCAddr)
 	if err != nil {
 		return err

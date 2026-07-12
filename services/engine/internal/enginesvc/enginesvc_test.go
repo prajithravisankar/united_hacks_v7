@@ -2,6 +2,7 @@ package enginesvc
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,7 +16,28 @@ func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m)
 }
 
-func newService(t *testing.T) *Server {
+// recordSink captures the running-state pushes the service makes after each control op.
+type recordSink struct {
+	mu  sync.Mutex
+	got []bool
+}
+
+func (r *recordSink) SetRunning(running bool) {
+	r.mu.Lock()
+	r.got = append(r.got, running)
+	r.mu.Unlock()
+}
+
+func (r *recordSink) last() (bool, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if len(r.got) == 0 {
+		return false, false
+	}
+	return r.got[len(r.got)-1], true
+}
+
+func newService(t *testing.T) (*Server, *recordSink) {
 	t.Helper()
 	timeline := make([]replay.Point, 5)
 	for i := range timeline {
@@ -29,11 +51,12 @@ func newService(t *testing.T) *Server {
 		}
 	}()
 	t.Cleanup(cancel)
-	return New(ticker, "1")
+	sink := &recordSink{}
+	return New(ticker, sink, "1"), sink
 }
 
 func TestStartPauseAndStateRoundTrip(t *testing.T) {
-	svc := newService(t)
+	svc, sink := newService(t)
 
 	started, err := svc.StartReplay(context.Background(), &enginev1.StartReplayRequest{CommitmentId: "1", Speed: 8})
 	if err != nil {
@@ -42,6 +65,9 @@ func TestStartPauseAndStateRoundTrip(t *testing.T) {
 	if !started.GetRunning() || started.GetSpeed() != 8 || started.GetCommitmentId() != "1" {
 		t.Fatalf("unexpected started state: %+v", started)
 	}
+	if r, ok := sink.last(); !ok || !r {
+		t.Fatalf("StartReplay should push running=true to the sink, got %v (set=%v)", r, ok)
+	}
 
 	paused, err := svc.Pause(context.Background(), &enginev1.PauseRequest{CommitmentId: "1"})
 	if err != nil {
@@ -49,6 +75,10 @@ func TestStartPauseAndStateRoundTrip(t *testing.T) {
 	}
 	if paused.GetRunning() {
 		t.Fatalf("expected not running after pause: %+v", paused)
+	}
+	// The whole point of the sink: a pause emits no tick, so the hub learns "not playing" only via this push.
+	if r, ok := sink.last(); !ok || r {
+		t.Fatalf("Pause should push running=false to the sink, got %v (set=%v)", r, ok)
 	}
 
 	state, err := svc.GetReplayState(context.Background(), &enginev1.GetReplayStateRequest{CommitmentId: "1"})
