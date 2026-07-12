@@ -3,6 +3,12 @@ brainstorming.md
 idea.md
 tech.md
 backend-todo.md
+frontend-todo.md
+
+# Node / frontend build artifacts
+node_modules/
+board/dist/
+*.local
 
 # Environment / secrets
 .env

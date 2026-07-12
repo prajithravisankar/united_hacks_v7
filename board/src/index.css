@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* Brand tokens — dark premium fintech, emerald/mint accent. These become utilities (bg-ink, text-brand, …). */
+@theme {
+  --color-ink: #060809;
+  --color-ink-2: #0a0f10;
+  --color-surface: #0d1315;
+  --color-surface-2: #111a1c;
+  --color-line: #1c2628;
+  --color-brand: #10b981;      /* emerald  */
+  --color-brand-2: #34d399;    /* mint     */
+  --color-brand-3: #6ee7b7;    /* light    */
+  --color-fg: #e7edee;
+  --color-fg-dim: #9aa7a6;
+  --color-fg-mute: #61706e;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
+}
+
+::selection { background: color-mix(in oklab, var(--color-brand) 35%, transparent); color: #fff; }
+
+/* Subtle blueprint grid used behind hero/sections. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Emerald text gradient for accents. */
+@utility text-gradient {
+  background: linear-gradient(180deg, #fff 0%, var(--color-brand-3) 140%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility glow-brand {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-brand) 30%, transparent),
+    0 8px 40px -8px color-mix(in oklab, var(--color-brand) 45%, transparent);
+}
