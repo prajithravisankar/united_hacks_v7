@@ -36,6 +36,12 @@ func RegisterReplayControl(mux *http.ServeMux, ticker *replay.Ticker, sink Runni
 		notify()
 		state(w)
 	})
+	mux.HandleFunc("/control/restart", func(w http.ResponseWriter, r *http.Request) {
+		ticker.Seek(0) // rewind to the start so the fund climbs from the beginning
+		ticker.Start(speedParam(r, 30))
+		notify()
+		state(w)
+	})
 	mux.HandleFunc("/control/pause", func(w http.ResponseWriter, r *http.Request) {
 		ticker.Pause()
 		notify()

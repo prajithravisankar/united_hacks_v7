@@ -9,6 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': { target: 'http://127.0.0.1:8888', changeOrigin: true },
+      '/control': { target: 'http://127.0.0.1:8888', changeOrigin: true },
       '/ws': { target: 'ws://127.0.0.1:8888', ws: true },
     },
   },
