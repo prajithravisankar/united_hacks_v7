@@ -26,8 +26,10 @@ def _repo_root() -> Path:
 
 
 REPO_ROOT = _repo_root()
-DDL_FILE = REPO_ROOT / "docker" / "oracle" / "init" / "01_warehouse.sql"
-RAW = REPO_ROOT / "data" / "raw"
+# Paths default to the host repo layout but can be overridden so the loader runs inside a container (the
+# compose `data-seed` one-shot mounts data/ and the DDL and points these at the mounts).
+DDL_FILE = Path(os.environ.get("BOYS_DDL_FILE") or REPO_ROOT / "docker" / "oracle" / "init" / "01_warehouse.sql")
+RAW = Path(os.environ.get("BOYS_RAW_DIR") or REPO_ROOT / "data" / "raw")
 
 SEASONS = {
     "football_E0_2122.csv": "2122",

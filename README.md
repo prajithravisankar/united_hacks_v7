@@ -21,18 +21,39 @@ Browser (board — later)
 | `services/engine` | Go 1.25 | Deterministic 30× replay + WebSocket streaming. |
 | `protos/` | Protocol Buffers | The single gRPC contract shared by all three languages. |
 
-## Quick start (dev)
+## Quick start
 
 Prereqs: Docker Desktop (≥ 8GB RAM), .NET 9 SDK, Go 1.25+, `uv` (Python), `protoc`.
 
 ```bash
-# run every service's test suite + linters (the gate)
-./scripts/verify.sh
-
-# bring up the databases (Epic E0/B02)
 cp .env.example .env          # fill in / keep dev defaults
-docker compose up -d          # first run pulls ~3GB of images
+```
+
+### Full demo stack — one command (profile `demo`)
+
+Brings the whole system up (databases → NAV-curve data-seed → brain/ledger → engine → nginx edge, all
+health-gated), authors the demo scenario, and verifies it. nginx fronts everything on **one origin**
+(`127.0.0.1:8888`): `/api` → ledger, `/ws/live` → engine — so the browser needs no CORS.
+
+```bash
+./scripts/demo_up.sh          # from zero to demo-ready (~45s on a warm machine)
+# equivalently:
+#   docker compose --profile demo up -d --build --wait
+#   ./scripts/seed_demo.sh     # resets to the pristine demo scenario (commitment 1, $100 escrowed)
+#   ./scripts/check_stack.sh   # asserts every container healthy + REST/WS through nginx + demo goal present
+
+# reset to pristine between demo takes (no rebuild):
+./scripts/seed_demo.sh
+```
+
+### Dev — databases only (default, no profile)
+
+A bare `docker compose up` starts just the two databases (the app services are behind the `demo` profile):
+
+```bash
+docker compose up -d          # mssql + oracle only (first run pulls ~3GB of images)
 ./scripts/check_dbs.sh        # proves both accept a real query
+./scripts/verify.sh           # every service's test suite + linters (the gate)
 ```
 
 ### Databases (Apple Silicon notes)
