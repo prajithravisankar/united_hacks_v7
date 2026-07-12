@@ -13,7 +13,7 @@ ENGINE_HTTP="127.0.0.1:8090"
 BRAIN_HTTP="127.0.0.1:8081"
 LEDGER_HTTP="127.0.0.1:8080"
 BRAIN_CONTAINER="boys-brain"
-CYCLES=3
+CYCLES="${CYCLES:-3}"
 
 echo "== BOYS degradation drill =="
 

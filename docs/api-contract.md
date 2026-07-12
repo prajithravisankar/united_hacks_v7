@@ -17,11 +17,12 @@ No endpoint returns a raw exception or stack trace. Codes → status: `not_found
 |---|---|---|
 | `POST` | `/api/goals` | Create a goal through the AI SMART-goal gate. Valid → **201** `{commitmentId, aiVerdict, degraded}`. AI wants a revision → **422** `{error, suggestedRewrite}`. Stake/milestones/deadline outside limits → **422** naming the rule. |
 | `POST` | `/api/goals/{id}/activate` | Escrow the stake and move to `active`. Idempotent. |
-| `GET` | `/api/goals/{id}` | Current `state`, `deadline`, and the event `timeline`. Unknown → 404. |
+| `GET` | `/api/goals/{id}` | Current `state`, `deadline`, the `milestones` (`{milestoneId, ordinal, description, targetMetric, dueDate, state}`), and the event `timeline`. Unknown → 404. |
 | `POST` | `/api/goals/{id}/proof` | Submit evidence for a milestone → AI first pass. Oversized/unsupported → 422. |
 | `POST` | `/api/milestones/{id}/decision` | **Referee only.** `{decision:"approve"\|"reject"}` — approve clears the milestone, reject fails the commitment. Idempotent. |
 | `POST` | `/api/goals/{id}/cashout` | Bow out at a cleared milestone → `cashed_out`. |
-| `POST` | `/api/goals/{id}/ride` | Compound to the next leg → `riding`. |
+| `POST` | `/api/goals/{id}/ride` | Compound to the next leg → `riding`. Per-leg idempotent. |
+| `POST` | `/api/goals/{id}/succeed` | Clear the **final** leg → `succeeded` (the winning terminal; settlement then adds the winners-pool bonus). |
 | `POST` | `/api/goals/{id}/settle` | Settle → the **receipt** `{type, principalCents, navCents, gainCents, carryCents, charityCents, bonusCents, takeHomeCents}`. Exactly-once. |
 | `GET` | `/api/goals/{id}/receipt` | The settlement receipt (404 if not settled). |
 | `GET` | `/api/goals/{id}/valuation` | Proxy to brain's valuation. **Degraded contract:** if brain is down this returns **200** `{degraded:true, …}`, never a 500. |

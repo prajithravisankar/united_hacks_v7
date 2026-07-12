@@ -409,6 +409,29 @@
                 }
             }
         },
+        "/api/goals/{id}/succeed": {
+            "post": {
+                "tags": [
+                    "Boys.Ledger.Api"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/goals/{id}/settle": {
             "post": {
                 "tags": [

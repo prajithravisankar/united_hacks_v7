@@ -47,15 +47,22 @@ public static class PublicApiEndpoints
         api.MapPost("/goals/{id:int}/activate", async (int id, GoalService goals) =>
             Results.Json(new { commitmentId = id, state = (await goals.ActivateAsync(id)).ToDb() }));
 
-        api.MapGet("/goals/{id:int}", async (int id, ICommitmentRepository commitments) =>
+        api.MapGet("/goals/{id:int}", async (int id, ICommitmentRepository commitments, IDbConnectionFactory factory) =>
         {
             var view = await commitments.GetAsync(id);  // throws NotFound (404) if absent; applies the deadline gate
             var events = await commitments.GetEventsAsync(id);
+            await using var conn = factory.Create();
+            await conn.OpenAsync();
+            var milestones = await conn.QueryAsync<MilestoneView>(
+                "SELECT milestone_id AS MilestoneId, ordinal AS Ordinal, description AS Description, "
+                + "target_metric AS TargetMetric, due_date AS DueDate, state AS State "
+                + "FROM milestones WHERE commitment_id = @id ORDER BY ordinal", new { id });
             return Results.Json(new
             {
                 commitmentId = id,
                 state = view.State.ToDb(),
                 deadline = view.Deadline,
+                milestones,
                 timeline = events.Select(e => new { e.FromState, e.ToState, e.Command, e.OccurredAt }),
             });
         });
@@ -86,8 +93,37 @@ public static class PublicApiEndpoints
         api.MapPost("/goals/{id:int}/cashout", async (int id, ICommitmentRepository commitments) =>
             Results.Json(new { state = (await commitments.TransitionAsync(id, CommitmentCommand.CashOut, false, $"sys:cashout:{id}", systemKey: true)).ToState.ToDb() }));
 
-        api.MapPost("/goals/{id:int}/ride", async (int id, ICommitmentRepository commitments) =>
-            Results.Json(new { state = (await commitments.TransitionAsync(id, CommitmentCommand.Ride, false, $"sys:ride:{id}", systemKey: true)).ToState.ToDb() }));
+        // Ride can happen once per leg, so the idempotency key is per-leg — a fixed sys:ride:{id} would make
+        // the 2nd+ ride a silent no-op and break multi-leg riding, while a double-click on the SAME leg still
+        // collapses to one transition. The leg is counted from the authoritative, transactional event log
+        // (clear_milestone events are written atomically with the transition — the milestones.state projection
+        // is updated separately and can lag).
+        api.MapPost("/goals/{id:int}/ride", async (int id, ICommitmentRepository commitments, IDbConnectionFactory factory) =>
+        {
+            await using var conn = factory.Create();
+            await conn.OpenAsync();
+            var leg = await conn.ExecuteScalarAsync<int>(ClearedLegsSql, new { id });
+            var result = await commitments.TransitionAsync(id, CommitmentCommand.Ride, false, $"sys:ride:{id}:leg{leg}", systemKey: true);
+            return Results.Json(new { state = result.ToState.ToDb() });
+        });
+
+        // Clear the FINAL leg → succeeded (the winning terminal, which pays the winners-pool bonus). Guard
+        // server-side that every milestone really is cleared — the state machine's isFinalLeg is client-asserted,
+        // so without this a client could "succeed" (and draw the bonus) after clearing just one of N milestones.
+        api.MapPost("/goals/{id:int}/succeed", async (int id, ICommitmentRepository commitments, IDbConnectionFactory factory) =>
+        {
+            await using var conn = factory.Create();
+            await conn.OpenAsync();
+            var cleared = await conn.ExecuteScalarAsync<int>(ClearedLegsSql, new { id });
+            var total = await conn.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM milestones WHERE commitment_id = @id", new { id });
+            if (cleared < total)
+            {
+                throw new LedgerValidationException("cannot succeed before the final milestone is cleared — ride to the next leg");
+            }
+            var result = await commitments.TransitionAsync(id, CommitmentCommand.Complete, isFinalLeg: true, $"sys:succeed:{id}", systemKey: true);
+            return Results.Json(new { state = result.ToState.ToDb() });
+        });
 
         api.MapPost("/goals/{id:int}/settle", async (int id, SettlementService settlement) =>
             Results.Json(ReceiptJson(await settlement.SettleAsync(id))));
@@ -152,6 +188,11 @@ public static class PublicApiEndpoints
             return Results.Json(charities);
         });
     }
+
+    // Count of milestones a commitment has cleared, from the authoritative event log (atomic with each
+    // clear transition — unlike the milestones.state projection, which is written on a separate connection).
+    private const string ClearedLegsSql =
+        "SELECT COUNT(*) FROM commitment_events WHERE commitment_id = @id AND command = 'clear_milestone'";
 
     private static int? RequestUserId(HttpContext ctx) =>
         ctx.Request.Headers.TryGetValue(UserHeader, out var value) && int.TryParse(value, out var id) ? id : null;

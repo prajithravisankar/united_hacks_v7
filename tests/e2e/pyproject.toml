@@ -1,0 +1,16 @@
+[project]
+name = "boys-e2e"
+version = "0.1.0"
+description = "BOYS end-to-end tests — drive the demo stories through nginx against the composed stack."
+requires-python = ">=3.12"
+dependencies = [
+    "pytest>=8.3.0",
+    "httpx>=0.28.1",
+    "websockets>=13.1",
+    "grpcio>=1.82.1",
+    "protobuf>=5.27",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["."]

@@ -22,3 +22,6 @@ public sealed record CommunityPoolStats(int CommittedPeople, long PoolCents);
 
 /// <summary>A vetted charity.</summary>
 public sealed record Charity(int CharityId, string Name);
+
+/// <summary>A commitment's milestone, as returned by GET /api/goals/{id} (so callers learn milestone ids).</summary>
+public sealed record MilestoneView(int MilestoneId, int Ordinal, string Description, string TargetMetric, DateTime DueDate, string State);
